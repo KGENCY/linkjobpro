@@ -287,24 +287,6 @@ export function Step2CompanyDocuments({
           )}
         </div>
 
-        {uploadedCount >= visibleDocuments.filter((d) => d.required).length &&
-          uploadedCount < totalCount && (
-            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm text-green-800">
-                필수 서류가 준비되었습니다. 다음 단계로 이동하실 수 있습니다.
-              </p>
-            </div>
-          )}
-
-        {uploadedCount < visibleDocuments.filter((d) => d.required).length && (
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              필수 서류{" "}
-              {visibleDocuments.filter((d) => d.required).length - uploadedCount}
-              개를 더 올려주세요.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

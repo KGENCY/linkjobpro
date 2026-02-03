@@ -203,20 +203,9 @@ ${formData.jobSummary}
     setDocumentVersions(documentVersions + 1);
   };
 
-  // 다음 단계 진행 가능 여부
+  // 다음 단계 진행 가능 여부 - 검증 제거, 항상 진행 가능
   const canProceed = () => {
-    switch (currentStep) {
-      case 1:
-        return Object.values(foreignerDocs).filter(Boolean).length >= 4;
-      case 2:
-        return Object.values(companyDocs).filter(Boolean).length >= 5;
-      case 3:
-        return !!(generatedDocs.employmentReason && generatedDocs.jobDescription);
-      case 4:
-        return true;
-      default:
-        return false;
-    }
+    return true;
   };
 
   // 진행률 계산
