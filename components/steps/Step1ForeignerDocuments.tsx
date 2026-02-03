@@ -171,68 +171,75 @@ export function Step1ForeignerDocuments({
           </div>
         </div>
 
-        {/* E-7 추가 서류 선택 섹션 - 세로 1열 */}
-        {availableToAdd.length > 0 && (
-          <div className="mb-6 bg-white border-2 border-dashed border-blue-300 rounded-lg p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Plus className="w-5 h-5 text-blue-600" />
-              <h3 className="text-base font-semibold text-gray-900">
-                E-7 추가 서류 선택
-              </h3>
-            </div>
-            <p className="text-sm text-gray-600 mb-4">
-              필요한 추가 서류를 클릭하면 아래 업로드 카드에 추가됩니다.
-            </p>
-            <div className="space-y-2">
-              {availableToAdd.map((doc) => (
-                <button
-                  key={doc.id}
-                  onClick={() => addDocument(doc.id)}
-                  className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all text-left group"
-                >
-                  <div className="flex-shrink-0">
-                    <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+        {/* 메인 컨텐츠 영역 - 왼쪽 넓게, 오른쪽 좁게 */}
+        <div className="flex gap-6">
+          {/* 왼쪽: 서류 업로드 카드 (넓음) */}
+          <div className="flex-1">
+            <div className="grid grid-cols-2 gap-4">
+              {activeDocuments.map((doc) => {
+                const isDefault = DEFAULT_DOCUMENTS.some(d => d.id === doc.id);
+                return (
+                  <div key={doc.id} className="relative">
+                    <DocumentDropCard
+                      title={doc.title}
+                      description={doc.description}
+                      required={doc.required}
+                      file={documents[doc.id]}
+                      onFileUpload={(file) => onFileUpload(doc.id, file)}
+                      onFileRemove={() => onFileRemove(doc.id)}
+                    />
+                    {!isDefault && (
+                      <button
+                        onClick={() => removeDocument(doc.id)}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg transition-colors"
+                        title="서류 제거"
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 text-sm">
-                      {doc.title}
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {doc.description}
-                    </p>
-                  </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           </div>
-        )}
 
-        {/* 서류 업로드 카드 */}
-        <div className="grid grid-cols-2 gap-4">
-          {activeDocuments.map((doc) => {
-            const isDefault = DEFAULT_DOCUMENTS.some(d => d.id === doc.id);
-            return (
-              <div key={doc.id} className="relative">
-                <DocumentDropCard
-                  title={doc.title}
-                  description={doc.description}
-                  required={doc.required}
-                  file={documents[doc.id]}
-                  onFileUpload={(file) => onFileUpload(doc.id, file)}
-                  onFileRemove={() => onFileRemove(doc.id)}
-                />
-                {!isDefault && (
-                  <button
-                    onClick={() => removeDocument(doc.id)}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg transition-colors"
-                    title="서류 제거"
-                  >
-                    ×
-                  </button>
-                )}
+          {/* 오른쪽: E-7 추가 서류 선택 (좁음, 사이드바) */}
+          {availableToAdd.length > 0 && (
+            <div className="w-80 flex-shrink-0">
+              <div className="sticky top-8 bg-white border-2 border-dashed border-blue-300 rounded-lg p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Plus className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-sm font-bold text-gray-900">
+                    E-7 추가 서류
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-600 mb-4">
+                  클릭하여 왼쪽에 추가
+                </p>
+                <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+                  {availableToAdd.map((doc) => (
+                    <button
+                      key={doc.id}
+                      onClick={() => addDocument(doc.id)}
+                      className="w-full flex items-start gap-2 p-3 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all text-left group"
+                    >
+                      <div className="flex-shrink-0 mt-0.5">
+                        <Plus className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 text-xs leading-tight">
+                          {doc.title}
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">
+                          {doc.description}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            );
-          })}
+            </div>
+          )}
         </div>
 
         {uploadedCount >= 4 && uploadedCount < totalCount && (
