@@ -181,16 +181,10 @@ export function Step2CompanyDocuments({
           />
         </div>
 
-        {/* 진행률 표시 - 양쪽 모두 표시 + 사업체 형태 선택 */}
-        <div className="mb-6 flex items-center gap-3">
-          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium">
-            <span className="font-bold">외국인:</span> 0/0
-          </div>
-          <div className="inline-flex items-center gap-2 bg-purple-50 text-purple-700 px-4 py-2 rounded-lg text-sm font-medium">
-            <span className="font-bold">사업체:</span> {uploadedCount}/{totalCount}
-          </div>
-          <div className="ml-auto flex items-center gap-3 bg-white border border-gray-200 px-4 py-2 rounded-lg">
-            <span className="text-sm text-gray-700">사업체 형태:</span>
+        {/* 사업체 형태 선택 */}
+        <div className="mb-6 flex justify-end">
+          <div className="flex items-center gap-3 bg-white border-2 border-purple-200 px-4 py-2 rounded-lg">
+            <span className="text-sm font-medium text-gray-700">사업체 형태:</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsCorporation(true)}
@@ -213,6 +207,39 @@ export function Step2CompanyDocuments({
                 개인
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* 서류 전달 상태 박스 */}
+        <div className="mb-6 bg-white border-2 border-purple-200 rounded-lg p-4">
+          <div className="flex items-start justify-between mb-3">
+            <h3 className="text-sm font-bold text-gray-900">
+              사업체 서류 전달 현황
+            </h3>
+            <button
+              onClick={() => window.location.href = 'tel:010-9876-5432'}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              010-9876-5432
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {visibleDocuments.map((doc) => {
+              const isUploaded = documents[doc.id] !== null;
+              return (
+                <div key={doc.id} className="flex items-center gap-2 text-xs">
+                  {isUploaded ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-green-600 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-300 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                  )}
+                  <span className={isUploaded ? "text-gray-900" : "text-gray-400"}>
+                    {doc.title}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 

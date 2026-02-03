@@ -17,6 +17,8 @@ export interface Case {
   stepProgress: string; // "외국인 서류 4/6"
   createdAt: string;
   lastUpdated: string;
+  foreignerPhone?: string;
+  companyPhone?: string;
 }
 
 export const STATUS_LABELS: Record<CaseStatus, string> = {
