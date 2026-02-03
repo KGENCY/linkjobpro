@@ -169,39 +169,54 @@ export function Step2CompanyDocuments({
           <p className="text-gray-600">
             채용 사업체가 제출한 서류를 여기로 올려주세요.
           </p>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium">
-              진행률: {uploadedCount}/{totalCount} 완료
-            </div>
-            <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-2 rounded-lg">
-              <span className="text-sm text-gray-700">사업체 형태:</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setIsCorporation(true)}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                    isCorporation
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  법인
-                </button>
-                <button
-                  onClick={() => setIsCorporation(false)}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                    !isCorporation
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  개인
-                </button>
-              </div>
+        </div>
+
+        {/* 링크 공유 배너 - 상단으로 이동 */}
+        <div className="mb-6">
+          <ShareLinkBanner
+            type="company"
+            caseId={caseId}
+            uploadedCount={uploadedCount}
+            totalCount={totalCount}
+          />
+        </div>
+
+        {/* 진행률 표시 - 양쪽 모두 표시 + 사업체 형태 선택 */}
+        <div className="mb-6 flex items-center gap-3">
+          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium">
+            <span className="font-bold">외국인:</span> 0/0
+          </div>
+          <div className="inline-flex items-center gap-2 bg-purple-50 text-purple-700 px-4 py-2 rounded-lg text-sm font-medium">
+            <span className="font-bold">사업체:</span> {uploadedCount}/{totalCount}
+          </div>
+          <div className="ml-auto flex items-center gap-3 bg-white border border-gray-200 px-4 py-2 rounded-lg">
+            <span className="text-sm text-gray-700">사업체 형태:</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsCorporation(true)}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  isCorporation
+                    ? "bg-purple-500 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                법인
+              </button>
+              <button
+                onClick={() => setIsCorporation(false)}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  !isCorporation
+                    ? "bg-purple-500 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                개인
+              </button>
             </div>
           </div>
         </div>
 
-        {/* E-7 추가 서류 선택 섹션 */}
+        {/* E-7 추가 서류 선택 섹션 - 세로 1열 */}
         {availableToAdd.length > 0 && (
           <div className="mb-6 bg-white border-2 border-dashed border-purple-300 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-4">
@@ -211,17 +226,17 @@ export function Step2CompanyDocuments({
               </h3>
             </div>
             <p className="text-sm text-gray-600 mb-4">
-              필요한 추가 서류를 선택하면 아래 업로드 카드에 추가됩니다.
+              필요한 추가 서류를 클릭하면 아래 업로드 카드에 추가됩니다.
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
               {availableToAdd.map((doc) => (
                 <button
                   key={doc.id}
                   onClick={() => addDocument(doc.id)}
-                  className="flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-purple-400 hover:bg-purple-50 transition-all text-left group"
+                  className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-purple-400 hover:bg-purple-50 transition-all text-left group"
                 >
-                  <div className="mt-1">
-                    <Plus className="w-4 h-4 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                  <div className="flex-shrink-0">
+                    <Plus className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-gray-900 text-sm">
@@ -283,16 +298,6 @@ export function Step2CompanyDocuments({
             </p>
           </div>
         )}
-
-        {/* 링크 공유 배너 */}
-        <div className="mt-6">
-          <ShareLinkBanner
-            type="company"
-            caseId={caseId}
-            uploadedCount={uploadedCount}
-            totalCount={totalCount}
-          />
-        </div>
       </div>
     </div>
   );
