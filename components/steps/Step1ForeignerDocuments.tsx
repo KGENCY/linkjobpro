@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { DocumentDropCard } from "@/components/wizard/DocumentDropCard";
 import { ShareLinkBanner } from "@/components/wizard/ShareLinkBanner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus } from "lucide-react";
 
 interface UploadedFile {
   name: string;
@@ -15,7 +18,8 @@ interface Step1Props {
   onFileRemove: (docId: string) => void;
 }
 
-const FOREIGNER_DOCUMENTS = [
+// 기본 서류 목록
+const DEFAULT_DOCUMENTS = [
   {
     id: "passport",
     title: "여권 사본",
@@ -54,14 +58,86 @@ const FOREIGNER_DOCUMENTS = [
   },
 ];
 
+// E-7 추가 서류 목록
+const ADDITIONAL_E7_DOCUMENTS = [
+  {
+    id: "application_form",
+    title: "통합신청서",
+    description: "별지 제34호 서식",
+    required: false,
+    category: "E-7"
+  },
+  {
+    id: "tuberculosis",
+    title: "결핵진단서",
+    description: "보건소 또는 법무부지정병원, 3개월 이내 발급 (해당자)",
+    required: false,
+    category: "E-7"
+  },
+  {
+    id: "residence_proof",
+    title: "체류지 입증서류",
+    description: "부동산등기부등본 또는 전월세계약서",
+    required: false,
+    category: "E-7"
+  },
+  {
+    id: "job_application",
+    title: "외국인 직업 신고서",
+    description: "지정 서식 작성",
+    required: false,
+    category: "E-7"
+  },
+  {
+    id: "qualifications",
+    title: "외국인 자격요건 입증서류",
+    description: "학위증, 경력증명서, 자격증 등",
+    required: false,
+    category: "E-7"
+  },
+];
+
 export function Step1ForeignerDocuments({
   caseId,
   documents,
   onFileUpload,
   onFileRemove,
 }: Step1Props) {
-  const uploadedCount = Object.values(documents).filter(Boolean).length;
-  const totalCount = FOREIGNER_DOCUMENTS.length;
+  // 활성화된 서류 ID 목록
+  const [activeDocIds, setActiveDocIds] = useState<Set<string>>(
+    new Set(DEFAULT_DOCUMENTS.map(d => d.id))
+  );
+
+  // 모든 서류 목록 (기본 + 추가)
+  const ALL_DOCUMENTS = [...DEFAULT_DOCUMENTS, ...ADDITIONAL_E7_DOCUMENTS];
+
+  // 활성화된 서류만 필터링
+  const activeDocuments = ALL_DOCUMENTS.filter(doc => activeDocIds.has(doc.id));
+
+  // 추가 가능한 서류 (아직 선택되지 않은 것들)
+  const availableToAdd = ADDITIONAL_E7_DOCUMENTS.filter(doc => !activeDocIds.has(doc.id));
+
+  const uploadedCount = activeDocuments.filter(doc => documents[doc.id]).length;
+  const totalCount = activeDocuments.length;
+
+  // 서류 추가
+  const addDocument = (docId: string) => {
+    setActiveDocIds(prev => new Set([...prev, docId]));
+  };
+
+  // 서류 제거 (기본 서류는 제거 불가)
+  const removeDocument = (docId: string) => {
+    const isDefault = DEFAULT_DOCUMENTS.some(d => d.id === docId);
+    if (isDefault) return;
+
+    setActiveDocIds(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(docId);
+      return newSet;
+    });
+    // 파일도 제거
+    onFileRemove(docId);
+  };
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
@@ -78,18 +154,68 @@ export function Step1ForeignerDocuments({
           </div>
         </div>
 
+        {/* E-7 추가 서류 선택 섹션 */}
+        {availableToAdd.length > 0 && (
+          <div className="mb-6 bg-white border-2 border-dashed border-blue-300 rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Plus className="w-5 h-5 text-blue-600" />
+              <h3 className="text-base font-semibold text-gray-900">
+                E-7 추가 서류 선택
+              </h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              필요한 추가 서류를 선택하면 아래 업로드 카드에 추가됩니다.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {availableToAdd.map((doc) => (
+                <button
+                  key={doc.id}
+                  onClick={() => addDocument(doc.id)}
+                  className="flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all text-left group"
+                >
+                  <div className="mt-1">
+                    <Plus className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 text-sm">
+                      {doc.title}
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {doc.description}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 서류 업로드 카드 */}
         <div className="grid grid-cols-2 gap-4">
-          {FOREIGNER_DOCUMENTS.map((doc) => (
-            <DocumentDropCard
-              key={doc.id}
-              title={doc.title}
-              description={doc.description}
-              required={doc.required}
-              file={documents[doc.id]}
-              onFileUpload={(file) => onFileUpload(doc.id, file)}
-              onFileRemove={() => onFileRemove(doc.id)}
-            />
-          ))}
+          {activeDocuments.map((doc) => {
+            const isDefault = DEFAULT_DOCUMENTS.some(d => d.id === doc.id);
+            return (
+              <div key={doc.id} className="relative">
+                <DocumentDropCard
+                  title={doc.title}
+                  description={doc.description}
+                  required={doc.required}
+                  file={documents[doc.id]}
+                  onFileUpload={(file) => onFileUpload(doc.id, file)}
+                  onFileRemove={() => onFileRemove(doc.id)}
+                />
+                {!isDefault && (
+                  <button
+                    onClick={() => removeDocument(doc.id)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg transition-colors"
+                    title="서류 제거"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {uploadedCount >= 4 && uploadedCount < totalCount && (
