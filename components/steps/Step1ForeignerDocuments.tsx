@@ -140,13 +140,13 @@ export function Step1ForeignerDocuments({
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-gray-50">
-      <div className="max-w-5xl mx-auto px-8 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+    <div className="flex-1 overflow-auto bg-gradient-to-br from-blue-50 via-white to-blue-50/30">
+      <div className="max-w-6xl mx-auto px-8 py-10">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
             외국인 서류 올리기
           </h1>
-          <p className="text-gray-600">
+          <p className="text-[15px] text-gray-600 leading-relaxed">
             외국인이 제출한 서류를 여기로 올려주세요. 최소 4개 이상 필요합니다.
           </p>
         </div>
@@ -161,37 +161,77 @@ export function Step1ForeignerDocuments({
           />
         </div>
 
-        {/* 서류 전달 상태 박스 */}
-        <div className="mb-6 bg-white border-2 border-blue-200 rounded-lg p-4">
-          <div className="flex items-start justify-between mb-3">
-            <h3 className="text-sm font-bold text-gray-900">
-              외국인 서류 전달 현황
-            </h3>
+        {/* 서류 업로드 현황 모니터링 */}
+        <div className="mb-8 bg-gradient-to-br from-blue-50 to-blue-100/50 backdrop-blur border-2 border-blue-300/40 rounded-2xl p-6 shadow-md">
+          <div className="flex items-start justify-between mb-5">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <h3 className="text-lg font-bold text-gray-900">
+                  외국인 서류 업로드 현황
+                </h3>
+              </div>
+              <p className="text-[13px] text-gray-600 leading-relaxed">
+                외국인이 링크를 통해 직접 업로드한 서류를 실시간으로 확인하세요
+              </p>
+            </div>
             <button
               onClick={() => window.location.href = 'tel:010-1234-5678'}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all shadow-sm hover:shadow-md"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               010-1234-5678
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+
+          {/* 진행률 바 */}
+          <div className="mb-4 bg-white rounded-xl p-3 shadow-sm border border-blue-200/50">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold text-gray-700">업로드 진행률</span>
+              <span className="text-sm font-bold text-blue-600">
+                {uploadedCount}/{totalCount} 완료
+              </span>
+            </div>
+            <div className="relative h-2.5 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500"
+                style={{ width: `${totalCount > 0 ? (uploadedCount / totalCount) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+
+          {/* 서류 체크리스트 */}
+          <div className="grid grid-cols-3 gap-3">
             {activeDocuments.map((doc) => {
               const isUploaded = documents[doc.id] !== null;
               return (
-                <div key={doc.id} className="flex items-center gap-2 text-xs">
+                <div
+                  key={doc.id}
+                  className={`flex items-center gap-2 text-[13px] px-3 py-2 rounded-lg transition-all ${
+                    isUploaded
+                      ? 'bg-green-50 border border-green-200'
+                      : 'bg-white border border-gray-200'
+                  }`}
+                >
                   {isUploaded ? (
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-green-600 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-300 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
                   )}
-                  <span className={isUploaded ? "text-gray-900" : "text-gray-400"}>
+                  <span className={isUploaded ? "text-gray-900 font-semibold" : "text-gray-500"}>
                     {doc.title}
                   </span>
                 </div>
               );
             })}
           </div>
+
+          {uploadedCount === 0 && (
+            <div className="mt-4 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>아직 업로드된 서류가 없습니다. 외국인에게 링크를 전송했는지 확인하세요.</span>
+            </div>
+          )}
         </div>
 
         {/* 메인 컨텐츠 영역 - 왼쪽 넓게, 오른쪽 좁게 */}
@@ -229,31 +269,31 @@ export function Step1ForeignerDocuments({
           {/* 오른쪽: E-7 추가 서류 선택 (좁음, 사이드바) */}
           {availableToAdd.length > 0 && (
             <div className="w-80 flex-shrink-0">
-              <div className="sticky top-8 bg-white border-2 border-dashed border-blue-300 rounded-lg p-5">
+              <div className="sticky top-8 bg-white/80 backdrop-blur border-2 border-dashed border-blue-300/60 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <Plus className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-sm font-bold text-gray-900">
+                  <h3 className="text-base font-bold text-gray-900">
                     E-7 추가 서류
                   </h3>
                 </div>
-                <p className="text-xs text-gray-600 mb-4">
+                <p className="text-[13px] text-gray-600 mb-4 leading-relaxed">
                   클릭하여 왼쪽에 추가
                 </p>
-                <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+                <div className="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
                   {availableToAdd.map((doc) => (
                     <button
                       key={doc.id}
                       onClick={() => addDocument(doc.id)}
-                      className="w-full flex items-start gap-2 p-3 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all text-left group"
+                      className="w-full flex items-start gap-2.5 p-3.5 rounded-xl border-2 border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50/80 transition-all duration-200 text-left group hover:shadow-md"
                     >
                       <div className="flex-shrink-0 mt-0.5">
                         <Plus className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900 text-xs leading-tight">
+                        <div className="font-semibold text-gray-900 text-[13px] leading-tight">
                           {doc.title}
                         </div>
-                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">
+                        <p className="text-[11px] text-gray-500 mt-1.5 line-clamp-2 leading-relaxed">
                           {doc.description}
                         </p>
                       </div>

@@ -4,16 +4,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link2, Copy, Check, ExternalLink, Phone, CheckCircle2, XCircle } from "lucide-react";
 
-interface DocumentItem {
-  name: string;
-  uploaded: boolean;
-}
-
 interface ShareLinkBannerProps {
   type: "foreigner" | "company";
   caseId: string;
-  documents: DocumentItem[];
-  phoneNumber?: string;
+  uploadedCount: number;
+  totalCount: number;
 }
 
 export function ShareLinkBanner({
