@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Link2, Copy, Check, ExternalLink } from "lucide-react";
+import { Link2, Copy, Check, ExternalLink, Phone, CheckCircle2, XCircle } from "lucide-react";
 
 interface ShareLinkBannerProps {
   type: "foreigner" | "company";
