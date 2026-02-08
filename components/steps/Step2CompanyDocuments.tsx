@@ -134,7 +134,7 @@ export function Step2CompanyDocuments({
   const availableToAdd = ADDITIONAL_E7_COMPANY_DOCUMENTS.filter(doc => !activeDocIds.has(doc.id));
 
   const visibleDocuments = activeDocuments.filter(
-    (doc) => !('conditional' in doc) || !(doc as any).conditional || isCorporation
+    (doc) => !("conditional" in doc && doc.conditional) || isCorporation
   );
   const uploadedCount = visibleDocuments.filter((doc) => documents[doc.id])
     .length;
