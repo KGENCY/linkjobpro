@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { StepSidebar } from "@/components/wizard/StepSidebar";
 import { CaseHeaderBar } from "@/components/wizard/CaseHeaderBar";
@@ -9,6 +9,7 @@ import { Step1ForeignerDocuments } from "@/components/steps/Step1ForeignerDocume
 import { Step2CompanyDocuments } from "@/components/steps/Step2CompanyDocuments";
 import { Step3DocumentGeneration } from "@/components/steps/Step3DocumentGeneration";
 import { Step4FinalExport } from "@/components/steps/Step4FinalExport";
+import { AnalyzingOverlay } from "@/components/wizard/AnalyzingOverlay";
 import { ArrowLeft } from "lucide-react";
 
 interface UploadedFile {
@@ -16,10 +17,12 @@ interface UploadedFile {
   uploadedAt: string;
 }
 
-export default function WizardPage() {
+function WizardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
+
+  const [showAnalyzingOverlay, setShowAnalyzingOverlay] = useState(false);
 
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -312,11 +315,38 @@ ${formData.jobSummary}
         onNext={() => {
           if (currentStep === 4) {
             alert("모든 단계가 완료되었습니다!");
+          } else if (currentStep === 2) {
+            // Step2 → Step3 전환 시 분석 오버레이 표시
+            setShowAnalyzingOverlay(true);
           } else {
             setCurrentStep(Math.min(4, currentStep + 1));
           }
         }}
       />
+
+      {/* Step2→Step3 전환 분석 오버레이 */}
+      <AnalyzingOverlay
+        isVisible={showAnalyzingOverlay}
+        onComplete={() => {
+          setShowAnalyzingOverlay(false);
+          setCurrentStep(3);
+        }}
+      />
     </div>
+  );
+}
+
+export default function WizardPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <WizardContent />
+    </Suspense>
   );
 }

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Sparkles, FileText, Loader2, Check } from "lucide-react";
+import { Sparkles, Loader2, Check, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FormData {
@@ -33,6 +33,13 @@ interface Step3Props {
   versions: number;
 }
 
+// 생성 중 로딩 문구
+const generatingMessages = [
+  "고용 필요성 논리를 정리 중이에요...",
+  "문장 구조를 심사 기준에 맞게 다듬는 중이에요...",
+  "마지막 문장 점검 중... 거의 완료!",
+];
+
 export function Step3DocumentGeneration({
   formData,
   onFormChange,
@@ -42,31 +49,53 @@ export function Step3DocumentGeneration({
   versions,
 }: Step3Props) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingMessageIndex, setGeneratingMessageIndex] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
 
   const handleChange = (field: keyof FormData, value: string) => {
     onFormChange({ ...formData, [field]: value });
   };
 
-  const isFormComplete =
-    formData.companyName &&
-    formData.industry &&
-    formData.jobTitle &&
-    formData.jobSummary &&
-    formData.hiringReason &&
-    formData.salary &&
-    formData.foreignerName &&
-    formData.major;
+  // 필수 필드 체크
+  const requiredFields = {
+    companyName: "회사명",
+    industry: "업종",
+    jobTitle: "직무명",
+    jobSummary: "주요 업무",
+    hiringReason: "채용이 필요한 이유",
+    salary: "급여",
+    foreignerName: "외국인 이름",
+    nationality: "국적",
+    major: "전공",
+  };
+
+  const emptyRequiredFields = Object.entries(requiredFields)
+    .filter(([key]) => !formData[key as keyof FormData])
+    .map(([, label]) => label);
+
+  const isFormComplete = emptyRequiredFields.length === 0;
 
   const hasGeneratedDocs = !!(documents.employmentReason && documents.jobDescription);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
     setShowPreview(false);
+    setGeneratingMessageIndex(0);
 
-    // 애니메이션 효과를 위한 딜레이
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // 문구 순차 변경
+    const messageInterval = setInterval(() => {
+      setGeneratingMessageIndex((prev) => {
+        if (prev < generatingMessages.length - 1) {
+          return prev + 1;
+        }
+        return prev;
+      });
+    }, 1500);
 
+    // 4.5초 후 완료
+    await new Promise((resolve) => setTimeout(resolve, 4500));
+
+    clearInterval(messageInterval);
     onGenerateDocuments();
     setIsGenerating(false);
     setShowPreview(true);
@@ -80,12 +109,24 @@ export function Step3DocumentGeneration({
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full mb-4">
             <Sparkles className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
             AI 고용사유서 자동 생성
           </h1>
-          <p className="text-lg text-gray-600">
-            아래 정보만 입력하면 전문가 수준의 고용사유서가 자동으로 완성됩니다
-          </p>
+          {/* 새로운 서브 문구 (직접 입력 유도) */}
+          <div className="max-w-2xl mx-auto">
+            <p className="text-lg text-gray-700 leading-relaxed">
+              전문가 수준의 고용 사유서를 생성하기 위해
+              <br />
+              <span className="font-semibold text-blue-600">아래 정보를 직접 입력해주세요.</span>
+            </p>
+            <p className="mt-2 text-gray-600">
+              입력하신 내용을 바탕으로 <span className="font-semibold">'고용 사유서 자동 생성하기'</span> 버튼을 누르면 초안이 생성됩니다.
+            </p>
+            {/* 보조 문구 */}
+            <p className="mt-3 text-sm text-gray-500 bg-gray-100 inline-block px-4 py-2 rounded-lg">
+              서류는 이미 업로드 완료되었습니다. 이 단계에서는 핵심 정보만 정확히 입력해주시면 됩니다.
+            </p>
+          </div>
         </div>
 
         {!hasGeneratedDocs ? (
@@ -107,7 +148,10 @@ export function Step3DocumentGeneration({
                         value={formData.companyName}
                         onChange={(e) => handleChange("companyName", e.target.value)}
                         placeholder="예: (주)테크놀로지"
-                        className="mt-2 h-12 text-base"
+                        className={cn(
+                          "mt-2 h-12 text-base",
+                          !formData.companyName && "border-gray-300"
+                        )}
                       />
                     </div>
                     <div>
@@ -183,7 +227,7 @@ export function Step3DocumentGeneration({
                       />
                     </div>
                     <div>
-                      <Label htmlFor="nationality" className="text-base">국적</Label>
+                      <Label htmlFor="nationality" className="text-base">국적 *</Label>
                       <Input
                         id="nationality"
                         value={formData.nationality}
@@ -233,7 +277,7 @@ export function Step3DocumentGeneration({
                       />
                     </div>
                     <div>
-                      <Label htmlFor="dormitory" className="text-base">기숙사</Label>
+                      <Label htmlFor="dormitory" className="text-base">기숙사 제공 여부</Label>
                       <Input
                         id="dormitory"
                         value={formData.dormitory}
@@ -247,7 +291,31 @@ export function Step3DocumentGeneration({
               </div>
             </div>
 
-            {/* 생성 버튼 (매우 크고 화려하게) */}
+            {/* 미입력 필수 항목 안내 */}
+            {!isFormComplete && emptyRequiredFields.length > 0 && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-red-700">
+                      다음 필수 항목을 입력해주세요:
+                    </p>
+                    <p className="text-sm text-red-600 mt-1">
+                      {emptyRequiredFields.join(", ")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 버튼 위 경고 문구 */}
+            <div className="text-center mb-4">
+              <p className="text-sm text-gray-600 bg-gray-100 inline-block px-4 py-2 rounded-lg">
+                <span className="text-orange-600 font-medium">링크 비자가 실수할 수 있으니</span>, 다시 한 번만 더 정확히 확인해주세요.
+              </p>
+            </div>
+
+            {/* 생성 버튼 */}
             <div className="text-center">
               <Button
                 size="lg"
@@ -256,18 +324,18 @@ export function Step3DocumentGeneration({
                 className={cn(
                   "h-16 px-12 text-lg font-bold rounded-xl shadow-xl transition-all",
                   "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700",
-                  "disabled:from-gray-400 disabled:to-gray-500"
+                  "disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed"
                 )}
               >
                 {isGenerating ? (
                   <>
                     <Loader2 className="w-6 h-6 mr-3 animate-spin" />
-                    AI가 문서를 생성하고 있습니다...
+                    {generatingMessages[generatingMessageIndex]}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-6 h-6 mr-3" />
-                    고용사유서 자동 생성하기
+                    고용 사유서 자동 생성하기
                   </>
                 )}
               </Button>
@@ -288,8 +356,12 @@ export function Step3DocumentGeneration({
                     <Check className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">생성 완료!</h2>
-                    <p className="text-gray-600">아래 내용을 확인하고 수정하세요</p>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      고용사유서 초안 생성 완료!
+                    </h2>
+                    <p className="text-gray-600">
+                      아래 내용을 확인하고 필요시 수정하세요
+                    </p>
                   </div>
                 </div>
                 <Button onClick={onSaveVersion} variant="outline">
@@ -319,8 +391,11 @@ export function Step3DocumentGeneration({
               </div>
             </div>
 
-            {/* 다시 생성 버튼 */}
+            {/* 다음 단계 안내 */}
             <div className="text-center">
+              <p className="text-gray-600 mb-4">
+                문서 확인이 완료되었다면 <span className="font-semibold">다음 단계로</span> 버튼을 클릭해주세요.
+              </p>
               <Button
                 size="lg"
                 onClick={() => {

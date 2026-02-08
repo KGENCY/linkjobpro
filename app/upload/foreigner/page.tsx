@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { DocumentDropCard } from "@/components/wizard/DocumentDropCard";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -72,7 +72,7 @@ const FOREIGNER_DOCUMENTS = [
   },
 ];
 
-export default function ForeignerUploadPage() {
+function ForeignerUploadContent() {
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
 
@@ -296,5 +296,20 @@ export default function ForeignerUploadPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ForeignerUploadPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <ForeignerUploadContent />
+    </Suspense>
   );
 }
