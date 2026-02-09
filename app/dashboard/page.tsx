@@ -48,7 +48,7 @@ export default function DashboardPage() {
       visaType: data.visaType,
       status: "collecting",
       currentStep: 1,
-      stepProgress: "외국인 서류 0/6 완료",
+      stepProgress: "제출 서류 0/9 완료",
       createdAt: new Date().toISOString().split("T")[0],
       lastUpdated: new Date().toLocaleString("ko-KR", {
         month: "2-digit",

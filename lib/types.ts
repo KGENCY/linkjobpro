@@ -5,7 +5,7 @@ export type CaseStatus =
   | "ready"         // 출력대기
   | "completed";    // 완료
 
-export type CaseStep = 1 | 2 | 3 | 4;
+export type CaseStep = 1 | 2 | 3;
 
 export interface Case {
   id: string;
@@ -38,10 +38,9 @@ export const STATUS_COLORS: Record<CaseStatus, string> = {
 };
 
 export const STEP_LABELS: Record<CaseStep, string> = {
-  1: "외국인 서류",
-  2: "사업체 서류",
-  3: "문서 작성",
-  4: "출력",
+  1: "제출 서류 요건",
+  2: "서류 생성",
+  3: "최종 출력",
 };
 
 // 외국인 서류 타입

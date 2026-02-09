@@ -11,7 +11,7 @@ interface CaseCardProps {
 }
 
 export function CaseCard({ case: caseData, onClick }: CaseCardProps) {
-  const steps = [1, 2, 3, 4] as const;
+  const steps = [1, 2, 3] as const;
 
   return (
     <Card
@@ -59,10 +59,10 @@ export function CaseCard({ case: caseData, onClick }: CaseCardProps) {
               >
                 {step}
               </div>
-              {step < 4 && (
+              {step < 3 && (
                 <div
                   className={cn(
-                    "w-8 h-0.5",
+                    "w-10 h-0.5",
                     caseData.currentStep > step ? "bg-green-500" : "bg-gray-200"
                   )}
                 />
