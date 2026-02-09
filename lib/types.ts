@@ -30,11 +30,11 @@ export const STATUS_LABELS: Record<CaseStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<CaseStatus, string> = {
-  collecting: "bg-blue-100 text-blue-700 border-blue-200",
-  writing: "bg-purple-100 text-purple-700 border-purple-200",
-  revision: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  ready: "bg-green-100 text-green-700 border-green-200",
-  completed: "bg-gray-100 text-gray-600 border-gray-200",
+  collecting: "bg-blue-50 text-blue-700",
+  writing: "bg-purple-50 text-purple-700",
+  revision: "bg-amber-100 text-amber-800 border border-amber-300",
+  ready: "bg-green-50 text-green-700",
+  completed: "bg-gray-100 text-gray-600",
 };
 
 export const STEP_LABELS: Record<CaseStep, string> = {

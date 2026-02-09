@@ -2,7 +2,7 @@
 
 import { Case, STATUS_LABELS, STATUS_COLORS, STEP_LABELS } from "@/lib/types";
 import { Card } from "@/components/ui/card";
-import { ChevronRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CaseCardProps {
@@ -34,7 +34,7 @@ export function CaseCard({ case: caseData, onClick }: CaseCardProps) {
         {/* 상태 배지 */}
         <div
           className={cn(
-            "px-3 py-1 rounded-full text-xs font-semibold border",
+            "px-3 py-1 rounded-full text-xs font-semibold",
             STATUS_COLORS[caseData.status]
           )}
         >
@@ -44,7 +44,7 @@ export function CaseCard({ case: caseData, onClick }: CaseCardProps) {
 
       {/* 진행 단계 표시 */}
       <div className="mb-4">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-3">
           {steps.map((step) => (
             <div key={step} className="flex items-center gap-2">
               <div
@@ -70,24 +70,26 @@ export function CaseCard({ case: caseData, onClick }: CaseCardProps) {
             </div>
           ))}
         </div>
-        <div className="text-xs text-gray-500">
-          현재: {STEP_LABELS[caseData.currentStep]}
-        </div>
+        {/* 현재 단계 강조 */}
+        <p className="text-sm">
+          <span className="text-gray-500">현재: </span>
+          <span className="text-blue-600 font-semibold">{STEP_LABELS[caseData.currentStep]}</span>
+        </p>
       </div>
 
       {/* 진행 상태 요약 */}
       <div className="mb-4">
-        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-sm font-medium">
+        <span className="text-sm text-gray-600">
           {caseData.stepProgress}
-        </div>
+        </span>
       </div>
 
-      {/* CTA 힌트 */}
+      {/* CTA */}
       <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-        <span className="text-sm text-gray-500 group-hover:text-blue-600 transition-colors">
-          클릭해서 이어서 작업하기
+        <span className="text-sm text-gray-600 font-medium group-hover:text-blue-600 transition-colors">
+          케이스 열기
         </span>
-        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+        <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
       </div>
     </Card>
   );

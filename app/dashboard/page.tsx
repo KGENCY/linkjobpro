@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { CaseCard } from "@/components/dashboard/CaseCard";
 import { EmptyState } from "@/components/dashboard/EmptyState";
@@ -47,7 +48,7 @@ export default function DashboardPage() {
       visaType: data.visaType,
       status: "collecting",
       currentStep: 1,
-      stepProgress: "외국인 서류 0/6",
+      stepProgress: "외국인 서류 0/6 완료",
       createdAt: new Date().toISOString().split("T")[0],
       lastUpdated: new Date().toLocaleString("ko-KR", {
         month: "2-digit",
@@ -74,7 +75,10 @@ export default function DashboardPage() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">E-7 업무 관리</h1>
+            <div>
+              <Image src="/LinkVisa.png" alt="LinkVisa" width={140} height={36} priority />
+              <p className="text-xs text-gray-400 mt-1">효율적 비자 관리 시스템</p>
+            </div>
             <Button size="lg" onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="w-5 h-5 mr-2" />
               새 케이스 만들기
