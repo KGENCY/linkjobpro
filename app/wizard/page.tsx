@@ -101,6 +101,25 @@ function WizardContent() {
 
   const [documentVersions, setDocumentVersions] = useState(1);
 
+  // 케이스 특이사항 (메모장형 단일 메모)
+  const [caseMemo, setCaseMemo] = useState("");
+  const [lastMemoSavedAt, setLastMemoSavedAt] = useState<string | undefined>();
+
+  // 메모 변경 핸들러
+  const handleMemoChange = (memo: string) => {
+    setCaseMemo(memo);
+    setLastMemoSavedAt(
+      new Date().toLocaleString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).replace(/\. /g, "-").replace(".", "")
+    );
+    // TODO: 실제 구현 시 localStorage 또는 API로 저장
+  };
+
   // 파일 변경 핸들러
   const handleForeignerFileChange = (docId: string, file: File | null) => {
     if (file) {
@@ -293,7 +312,13 @@ ${formData.jobSummary}
       />
 
       <div className="flex-1 flex overflow-hidden">
-        <StepSidebar steps={steps} currentStep={currentStep} />
+        <StepSidebar
+          steps={steps}
+          currentStep={currentStep}
+          caseMemo={caseMemo}
+          onMemoChange={handleMemoChange}
+          lastMemoSavedAt={lastMemoSavedAt}
+        />
 
         {currentStep === 1 && (
           <DocumentRequirements

@@ -2,6 +2,7 @@
 
 import { Check, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CaseNotesPanel } from "./CaseNotesPanel";
 
 interface Step {
   number: number;
@@ -13,11 +14,21 @@ interface Step {
 interface StepSidebarProps {
   steps: Step[];
   currentStep: number;
+  // 케이스 특이사항 (메모장형)
+  caseMemo?: string;
+  onMemoChange?: (memo: string) => void;
+  lastMemoSavedAt?: string;
 }
 
-export function StepSidebar({ steps, currentStep }: StepSidebarProps) {
+export function StepSidebar({
+  steps,
+  currentStep,
+  caseMemo = "",
+  onMemoChange,
+  lastMemoSavedAt,
+}: StepSidebarProps) {
   return (
-    <div className="w-72 bg-white border-r border-gray-200 p-6">
+    <div className="w-72 bg-white border-r border-gray-200 p-6 flex flex-col h-full overflow-hidden">
       <h2 className="text-lg font-bold text-gray-900 mb-6">진행 단계</h2>
       <div className="space-y-2">
         {steps.map((step, index) => {
@@ -119,6 +130,17 @@ export function StepSidebar({ steps, currentStep }: StepSidebarProps) {
           );
         })}
       </div>
+
+      {/* 케이스 특이사항 패널 (메모장형) */}
+      {onMemoChange && (
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <CaseNotesPanel
+            memo={caseMemo}
+            onMemoChange={onMemoChange}
+            lastSavedAt={lastMemoSavedAt}
+          />
+        </div>
+      )}
     </div>
   );
 }
