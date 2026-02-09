@@ -2,7 +2,7 @@
 
 import { Case, STATUS_LABELS, STATUS_COLORS, STEP_LABELS } from "@/lib/types";
 import { Card } from "@/components/ui/card";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CaseCardProps {
@@ -79,9 +79,17 @@ export function CaseCard({ case: caseData, onClick }: CaseCardProps) {
 
       {/* 진행 상태 요약 */}
       <div className="mb-4">
-        <span className="text-sm text-gray-600">
-          {caseData.stepProgress}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">
+            {caseData.stepProgress}
+          </span>
+          {caseData.revisionCount && caseData.revisionCount > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+              <AlertTriangle className="w-3 h-3" />
+              보완 요청 {caseData.revisionCount}건
+            </span>
+          )}
+        </div>
       </div>
 
       {/* CTA */}

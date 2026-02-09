@@ -15,6 +15,7 @@ export interface Case {
   status: CaseStatus;
   currentStep: CaseStep;
   stepProgress: string; // "외국인 서류 4/6"
+  revisionCount?: number; // 보완 요청 건수
   createdAt: string;
   lastUpdated: string;
   foreignerPhone?: string;

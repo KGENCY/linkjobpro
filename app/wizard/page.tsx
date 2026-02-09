@@ -17,18 +17,45 @@ interface UploadedFile {
   uploadedAt: string;
 }
 
+// Nguyen Van A 케이스 시나리오 데이터
+const SCENARIO_CASE_ID = "case-001";
+
+const SCENARIO_FOREIGNER_DOCS: Record<string, UploadedFile | null> = {
+  passport: { name: "passport_nguyen.pdf", uploadedAt: "10:15" },
+  arc: { name: "arc_nguyen.pdf", uploadedAt: "10:18" },
+  photo: { name: "photo_nguyen.jpg", uploadedAt: "10:20" },
+  diploma: { name: "diploma_hanoi_univ.pdf", uploadedAt: "10:22" },
+  transcript: { name: "transcript_nguyen.pdf", uploadedAt: "10:25" },
+  address: { name: "residence_contract.pdf", uploadedAt: "10:28" },
+};
+
+const SCENARIO_COMPANY_DOCS: Record<string, UploadedFile | null> = {
+  business_license: { name: "사업자등록증_ABC제조.pdf", uploadedAt: "11:05" },
+  corporate_register: { name: "법인등기부등본_ABC.pdf", uploadedAt: "11:08" },
+  insurance_list: { name: "4대보험_가입자명부.pdf", uploadedAt: "11:12" },
+  sales_proof: { name: "부가세과세표준증명.pdf", uploadedAt: "11:15" },
+  office_photos: { name: "사업장사진_ABC제조.zip", uploadedAt: "11:20" },
+  employment_contract: { name: "고용계약서_Nguyen.pdf", uploadedAt: "11:25" },
+};
+
 function WizardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
 
-  const [showAnalyzingOverlay, setShowAnalyzingOverlay] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
+  // 시나리오 모드 여부 (Nguyen Van A 케이스)
+  const isScenarioMode = caseId === SCENARIO_CASE_ID;
 
-  // 외국인 서류
+  const [showAnalyzingOverlay, setShowAnalyzingOverlay] = useState(false);
+  // 분석 오버레이가 이미 표시되었는지 추적 (케이스당 최초 1회만 표시)
+  const [hasShownAnalysis, setHasShownAnalysis] = useState(false);
+  // 시나리오 모드면 Step 2에서 시작
+  const [currentStep, setCurrentStep] = useState(isScenarioMode ? 2 : 1);
+
+  // 외국인 서류 (시나리오 모드면 모두 제출된 상태)
   const [foreignerDocs, setForeignerDocs] = useState<
     Record<string, UploadedFile | null>
-  >({
+  >(isScenarioMode ? SCENARIO_FOREIGNER_DOCS : {
     passport: null,
     arc: null,
     photo: null,
@@ -37,10 +64,10 @@ function WizardContent() {
     address: null,
   });
 
-  // 사업체 서류
+  // 사업체 서류 (시나리오 모드면 모두 제출된 상태)
   const [companyDocs, setCompanyDocs] = useState<
     Record<string, UploadedFile | null>
-  >({
+  >(isScenarioMode ? SCENARIO_COMPANY_DOCS : {
     business_license: null,
     corporate_register: null,
     insurance_list: null,
@@ -49,21 +76,21 @@ function WizardContent() {
     employment_contract: null,
   });
 
-  // 생성 문서 폼 데이터
+  // 생성 문서 폼 데이터 (시나리오 모드면 일부 채워진 상태)
   const [formData, setFormData] = useState({
-    companyName: "",
-    industry: "",
-    employeeCount: "",
-    address: "",
-    jobTitle: "",
-    jobSummary: "",
-    hiringReason: "",
-    salary: "",
-    workHours: "",
-    dormitory: "",
-    foreignerName: "김철수",
-    nationality: "",
-    major: "",
+    companyName: isScenarioMode ? "ABC 제조" : "",
+    industry: isScenarioMode ? "제조업" : "",
+    employeeCount: isScenarioMode ? "45명" : "",
+    address: isScenarioMode ? "경기도 안산시 단원구" : "",
+    jobTitle: isScenarioMode ? "생산관리 엔지니어" : "",
+    jobSummary: isScenarioMode ? "제조 공정 관리 및 품질 개선" : "",
+    hiringReason: isScenarioMode ? "해외 수출 확대에 따른 전문인력 필요" : "",
+    salary: isScenarioMode ? "월 300만원" : "",
+    workHours: isScenarioMode ? "주 40시간 (09:00-18:00)" : "",
+    dormitory: isScenarioMode ? "제공 (사내 기숙사)" : "",
+    foreignerName: isScenarioMode ? "Nguyen Van A" : "김철수",
+    nationality: isScenarioMode ? "베트남" : "",
+    major: isScenarioMode ? "산업공학" : "",
   });
 
   // 생성된 문서
@@ -123,7 +150,7 @@ function WizardContent() {
   // 서류 검토 상태 변경
   const handleReviewStatusChange = (
     docId: string,
-    status: "submitted" | "confirmed" | "revision_requested",
+    status: "not_submitted" | "submitted" | "confirmed" | "revision_requested" | "resubmitted",
     target: "foreigner" | "company",
     note?: string
   ) => {
@@ -261,7 +288,7 @@ ${formData.jobSummary}
       <CaseHeaderBar
         foreignerName={formData.foreignerName || "외국인"}
         companyName={formData.companyName || "회사명"}
-        visaType="E-7 (특정활동)"
+        visaType={isScenarioMode ? "E-7 변경" : "E-7 (특정활동)"}
         progress={calculateProgress()}
       />
 
@@ -284,6 +311,7 @@ ${formData.jobSummary}
             foreignerDocs={foreignerDocs}
             companyDocs={companyDocs}
             onStatusChange={handleReviewStatusChange}
+            scenarioMode={isScenarioMode}
           />
         )}
 
@@ -319,19 +347,25 @@ ${formData.jobSummary}
           if (currentStep === 4) {
             alert("모든 단계가 완료되었습니다!");
           } else if (currentStep === 2) {
-            // Step2 → Step3 전환 시 분석 오버레이 표시
-            setShowAnalyzingOverlay(true);
+            // Step2 → Step3 전환 시 분석 오버레이 표시 (최초 1회만)
+            if (!hasShownAnalysis) {
+              setShowAnalyzingOverlay(true);
+            } else {
+              // 이미 분석을 완료한 경우 바로 Step 3으로 이동
+              setCurrentStep(3);
+            }
           } else {
             setCurrentStep(Math.min(4, currentStep + 1));
           }
         }}
       />
 
-      {/* Step2→Step3 전환 분석 오버레이 */}
+      {/* Step2→Step3 전환 분석 오버레이 (케이스당 최초 1회만 표시) */}
       <AnalyzingOverlay
         isVisible={showAnalyzingOverlay}
         onComplete={() => {
           setShowAnalyzingOverlay(false);
+          setHasShownAnalysis(true); // 분석 완료 표시
           setCurrentStep(3);
         }}
       />
