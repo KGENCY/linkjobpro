@@ -6,6 +6,7 @@ import { StepSidebar } from "@/components/wizard/StepSidebar";
 import { CaseHeaderBar } from "@/components/wizard/CaseHeaderBar";
 import { NavigationButtons } from "@/components/wizard/NavigationButtons";
 import { DocumentRequirements } from "@/components/steps/DocumentRequirements";
+import { DocumentReview } from "@/components/steps/DocumentReview";
 import { Step3DocumentGeneration } from "@/components/steps/Step3DocumentGeneration";
 import { Step4FinalExport } from "@/components/steps/Step4FinalExport";
 import { AnalyzingOverlay } from "@/components/wizard/AnalyzingOverlay";
@@ -116,8 +117,18 @@ function WizardContent() {
 
   // 제출 서류 목록 보내기
   const handleSendRequirements = () => {
-    // TODO: 링크 생성 및 전송 로직
     alert("제출 서류 목록 링크가 생성되었습니다.\n외국인과 사업체에게 전달하세요.");
+  };
+
+  // 서류 검토 상태 변경
+  const handleReviewStatusChange = (
+    docId: string,
+    status: "submitted" | "confirmed" | "revision_requested",
+    target: "foreigner" | "company",
+    note?: string
+  ) => {
+    console.log(`Document ${docId} status changed to ${status}`, { target, note });
+    // TODO: 실제 상태 관리 로직 구현
   };
 
   // 문서 생성
@@ -125,31 +136,22 @@ function WizardContent() {
     const employmentReason = `3. 고용사유 및 인력활용계획
 
 1) 고용사유
-(※ 외국인력 도입 업무와 관련한 전문인력부족 현황, 국내인력 채용노력 및 인력을 충당하지 못한 사유, 전문외국인력의 기술과 담당할 업무의 연관성 등을 중심으로)
-
 당사 ${formData.companyName}은 ${formData.industry} 분야의 전문기업으로, 최근 ${formData.hiringReason}에 따라 전문 인력이 절실히 필요한 상황입니다.
 
 ${formData.jobTitle} 직무는 ${formData.jobSummary} 등의 고도의 전문 업무를 수행해야 하며, 이를 위해서는 관련 분야의 깊은 이해와 실무 경험이 필수적입니다.
 
-국내 인력 채용을 위해 구인공고 게재 및 헤드헌팅 등 다각도로 노력하였으나, ${formData.industry} 분야의 전문 인력 부족으로 인해 적합한 인재를 확보하지 못하였습니다. 특히 ${formData.jobTitle} 직무는 전문성과 실무 경험을 동시에 요구하는 업무로, 국내 인력만으로는 인력 수급이 어려운 실정입니다.
+국내 인력 채용을 위해 구인공고 게재 및 헤드헌팅 등 다각도로 노력하였으나, ${formData.industry} 분야의 전문 인력 부족으로 인해 적합한 인재를 확보하지 못하였습니다.
 
 채용 예정인 ${formData.foreignerName}님은 ${formData.major} 전공자로서 관련 분야에 대한 전문 지식과 기술을 보유하고 있으며, 당사가 요구하는 ${formData.jobTitle} 직무를 수행하기에 적합한 인재입니다.
 
-
 2) 기술도입 및 전문외국인력교류 효과
-
 ${formData.foreignerName}님의 채용을 통해 당사는 ${formData.industry} 분야의 최신 기술과 노하우를 습득할 수 있으며, 이는 당사의 기술 경쟁력 강화에 크게 기여할 것으로 기대됩니다.
 
-
 3) 활용계획
-
 ${formData.foreignerName}님은 ${formData.jobTitle}로서 다음과 같은 업무를 담당할 예정입니다:
-
 ${formData.jobSummary}
 
-
 4) 기타사항
-
 근로 조건:
 - 급여: ${formData.salary}
 - 근무 시간: ${formData.workHours || '주 40시간 (09:00-18:00)'}
@@ -193,23 +195,30 @@ ${formData.jobSummary}
     return true;
   };
 
-  // 진행률 계산 (3단계 구조)
+  // 진행률 계산 (4단계 구조)
   const calculateProgress = () => {
     let progress = 0;
 
-    // Step 1: 제출 서류 요건 (50%)
+    // Step 1: 제출 서류 요건 (25%)
     const foreignerCount = Object.values(foreignerDocs).filter(Boolean).length;
     const companyCount = Object.values(companyDocs).filter(Boolean).length;
-    const docProgress = ((foreignerCount + companyCount) / 12) * 50;
+    const docProgress = ((foreignerCount + companyCount) / 12) * 25;
     progress += docProgress;
 
-    // Step 2: 서류 생성 (25%)
+    // Step 2: 제출 서류 확인 (25%)
+    if (currentStep > 2) {
+      progress += 25;
+    } else if (currentStep === 2) {
+      progress += 12.5; // 진행 중
+    }
+
+    // Step 3: 서류 생성 (25%)
     if (generatedDocs.employmentReason && generatedDocs.jobDescription) {
       progress += 25;
     }
 
-    // Step 3: 최종 출력 (25%)
-    if (currentStep === 3) {
+    // Step 4: 최종 출력 (25%)
+    if (currentStep === 4) {
       progress += 25;
     }
 
@@ -220,7 +229,7 @@ ${formData.jobSummary}
   const foreignerDocsCompleted = Object.values(foreignerDocs).filter(Boolean).length >= 4;
   const companyDocsCompleted = Object.values(companyDocs).filter(Boolean).length >= 5;
 
-  // 3단계 구조
+  // 4단계 구조
   const steps = [
     {
       number: 1,
@@ -231,8 +240,9 @@ ${formData.jobSummary}
         { title: "사업체 서류", completed: companyDocsCompleted },
       ]
     },
-    { number: 2, title: "서류 생성", completed: currentStep > 2 },
-    { number: 3, title: "최종 출력", completed: false },
+    { number: 2, title: "제출 서류 확인", completed: currentStep > 2 },
+    { number: 3, title: "서류 생성", completed: currentStep > 3 },
+    { number: 4, title: "최종 출력", completed: false },
   ];
 
   return (
@@ -270,6 +280,14 @@ ${formData.jobSummary}
         )}
 
         {currentStep === 2 && (
+          <DocumentReview
+            foreignerDocs={foreignerDocs}
+            companyDocs={companyDocs}
+            onStatusChange={handleReviewStatusChange}
+          />
+        )}
+
+        {currentStep === 3 && (
           <Step3DocumentGeneration
             formData={formData}
             onFormChange={setFormData}
@@ -280,7 +298,7 @@ ${formData.jobSummary}
           />
         )}
 
-        {currentStep === 3 && (
+        {currentStep === 4 && (
           <Step4FinalExport
             foreignerDocs={foreignerDocs}
             companyDocs={companyDocs}
@@ -294,27 +312,27 @@ ${formData.jobSummary}
 
       <NavigationButtons
         currentStep={currentStep}
-        totalSteps={3}
+        totalSteps={4}
         canProceed={canProceed()}
         onPrevious={() => setCurrentStep(Math.max(1, currentStep - 1))}
         onNext={() => {
-          if (currentStep === 3) {
+          if (currentStep === 4) {
             alert("모든 단계가 완료되었습니다!");
-          } else if (currentStep === 1) {
-            // Step1 → Step2 전환 시 분석 오버레이 표시
+          } else if (currentStep === 2) {
+            // Step2 → Step3 전환 시 분석 오버레이 표시
             setShowAnalyzingOverlay(true);
           } else {
-            setCurrentStep(Math.min(3, currentStep + 1));
+            setCurrentStep(Math.min(4, currentStep + 1));
           }
         }}
       />
 
-      {/* Step1→Step2 전환 분석 오버레이 */}
+      {/* Step2→Step3 전환 분석 오버레이 */}
       <AnalyzingOverlay
         isVisible={showAnalyzingOverlay}
         onComplete={() => {
           setShowAnalyzingOverlay(false);
-          setCurrentStep(2);
+          setCurrentStep(3);
         }}
       />
     </div>

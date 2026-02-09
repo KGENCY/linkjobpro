@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Plus, Check, Circle, Send, User, Building2, ChevronDown, ChevronUp,
-  Copy, X, Eye, Clock, CheckCircle2, AlertCircle, Link as LinkIcon
+  Copy, X, Eye, Clock, CheckCircle2, AlertCircle, Link as LinkIcon, Edit3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -104,14 +104,18 @@ export function DocumentRequirements({
   const [foreignerPanelOpen, setForeignerPanelOpen] = useState(false);
   const [companyPanelOpen, setCompanyPanelOpen] = useState(false);
 
+  // 직접 서류 추가 인라인 입력 상태
+  const [foreignerCustomInput, setForeignerCustomInput] = useState<{ isOpen: boolean; title: string; description: string }>({
+    isOpen: false, title: "", description: ""
+  });
+  const [companyCustomInput, setCompanyCustomInput] = useState<{ isOpen: boolean; title: string; description: string }>({
+    isOpen: false, title: "", description: ""
+  });
+
   // 링크 생성 모달 상태
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [generatedLinks, setGeneratedLinks] = useState<{ foreigner?: string; company?: string }>({});
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
-
-  // 직접 서류 추가 모달 상태
-  const [showAddDocModal, setShowAddDocModal] = useState(false);
-  const [newDocData, setNewDocData] = useState({ title: "", description: "", target: "foreigner" as "foreigner" | "company" });
 
   // 서류 상태 (실제로는 서버에서 관리)
   const getDocStatus = (docId: string, docs: Record<string, { name: string; uploadedAt: string } | null>): DocStatus => {
@@ -162,27 +166,38 @@ export function DocumentRequirements({
     });
   };
 
-  // 직접 서류 추가
-  const handleAddCustomDoc = () => {
-    if (!newDocData.title.trim()) return;
+  // 직접 서류 추가 - 외국인
+  const addCustomForeignerDoc = () => {
+    if (!foreignerCustomInput.title.trim()) return;
 
     const newDoc: DocumentItem = {
-      id: `custom_${Date.now()}`,
-      title: newDocData.title,
-      description: newDocData.description || "추가 서류",
+      id: `custom_foreigner_${Date.now()}`,
+      title: foreignerCustomInput.title,
+      description: foreignerCustomInput.description || "추가 서류",
       isRequired: false,
       isCustom: true,
       status: "not_submitted",
     };
 
-    if (newDocData.target === "foreigner") {
-      setCustomForeignerDocs(prev => [...prev, newDoc]);
-    } else {
-      setCustomCompanyDocs(prev => [...prev, newDoc]);
-    }
+    setCustomForeignerDocs(prev => [...prev, newDoc]);
+    setForeignerCustomInput({ isOpen: false, title: "", description: "" });
+  };
 
-    setNewDocData({ title: "", description: "", target: "foreigner" });
-    setShowAddDocModal(false);
+  // 직접 서류 추가 - 사업체
+  const addCustomCompanyDoc = () => {
+    if (!companyCustomInput.title.trim()) return;
+
+    const newDoc: DocumentItem = {
+      id: `custom_company_${Date.now()}`,
+      title: companyCustomInput.title,
+      description: companyCustomInput.description || "추가 서류",
+      isRequired: false,
+      isCustom: true,
+      status: "not_submitted",
+    };
+
+    setCustomCompanyDocs(prev => [...prev, newDoc]);
+    setCompanyCustomInput({ isOpen: false, title: "", description: "" });
   };
 
   // 직접 추가 서류 제거
@@ -283,6 +298,79 @@ export function DocumentRequirements({
     </div>
   );
 
+  // 인라인 서류 추가 입력 컴포넌트
+  const InlineCustomDocInput = ({
+    input,
+    setInput,
+    onAdd,
+    accentColor,
+  }: {
+    input: { isOpen: boolean; title: string; description: string };
+    setInput: (val: { isOpen: boolean; title: string; description: string }) => void;
+    onAdd: () => void;
+    accentColor: "blue" | "purple";
+  }) => {
+    if (!input.isOpen) return null;
+
+    const colorClasses = accentColor === "blue"
+      ? { bg: "bg-blue-50", border: "border-blue-200", focusRing: "focus:ring-blue-500", btn: "bg-blue-600 hover:bg-blue-700" }
+      : { bg: "bg-purple-50", border: "border-purple-200", focusRing: "focus:ring-purple-500", btn: "bg-purple-600 hover:bg-purple-700" };
+
+    return (
+      <div className={cn("mt-3 p-4 rounded-xl border-2", colorClasses.bg, colorClasses.border)}>
+        <div className="flex items-center gap-2 mb-3">
+          <Edit3 className={cn("w-4 h-4", accentColor === "blue" ? "text-blue-600" : "text-purple-600")} />
+          <span className="text-sm font-semibold text-gray-900">직접 서류 추가</span>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <input
+              type="text"
+              value={input.title}
+              onChange={(e) => setInput({ ...input, title: e.target.value })}
+              placeholder="서류 이름을 입력하세요"
+              className={cn(
+                "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2",
+                colorClasses.focusRing
+              )}
+              autoFocus
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={input.description}
+              onChange={(e) => setInput({ ...input, description: e.target.value })}
+              placeholder="제출 기준 설명 (선택)"
+              className={cn(
+                "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2",
+                colorClasses.focusRing
+              )}
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setInput({ isOpen: false, title: "", description: "" })}
+              className="flex-1 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              취소
+            </button>
+            <button
+              onClick={onAdd}
+              disabled={!input.title.trim()}
+              className={cn(
+                "flex-1 py-2 rounded-lg text-sm font-medium text-white transition-colors",
+                input.title.trim() ? colorClasses.btn : "bg-gray-300 cursor-not-allowed"
+              )}
+            >
+              추가
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
       <div className="max-w-5xl mx-auto px-8 py-10">
@@ -319,21 +407,10 @@ export function DocumentRequirements({
           </div>
         </div>
 
-        {/* 직접 서류 추가 버튼 */}
-        <div className="mb-6 flex justify-end">
-          <button
-            onClick={() => setShowAddDocModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="text-sm font-medium">직접 서류 추가</span>
-          </button>
-        </div>
-
         {/* 서류 목록 - 2컬럼 */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           {/* 외국인 서류 */}
-          <div className="bg-white border-2 border-blue-200 rounded-2xl overflow-hidden">
+          <div className="bg-white border-2 border-blue-200 rounded-2xl overflow-hidden flex flex-col">
             <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-5 py-4">
               <div className="flex items-center gap-2 text-white">
                 <User className="w-5 h-5" />
@@ -343,7 +420,7 @@ export function DocumentRequirements({
                 </span>
               </div>
             </div>
-            <div className="p-4 space-y-2 max-h-[500px] overflow-y-auto">
+            <div className="p-4 space-y-2 flex-1 overflow-y-auto" style={{ maxHeight: "450px" }}>
               {activeForeignerDocs.map((doc) => (
                 <DocumentItemRow
                   key={doc.id}
@@ -358,19 +435,22 @@ export function DocumentRequirements({
                   }
                 />
               ))}
+            </div>
 
-              {/* 서류 추가 버튼 */}
+            {/* 하단 고정 버튼 영역 */}
+            <div className="p-4 border-t border-blue-100 bg-blue-50/30">
+              {/* 사전 정의 서류 추가 */}
               <button
                 onClick={() => setForeignerPanelOpen(!foreignerPanelOpen)}
-                className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-blue-300 rounded-xl text-blue-600 hover:bg-blue-50 transition-colors mt-3"
+                className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-blue-300 rounded-xl text-blue-600 hover:bg-blue-50 transition-colors"
               >
                 {foreignerPanelOpen ? <ChevronUp className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 <span className="text-sm font-medium">사전 정의 서류에서 추가</span>
               </button>
 
-              {/* 추가 가능한 서류 목록 */}
+              {/* 사전 정의 서류 목록 */}
               {foreignerPanelOpen && (
-                <div className="mt-3 p-3 bg-blue-50 rounded-xl space-y-2">
+                <div className="mt-3 p-3 bg-blue-50 rounded-xl space-y-2 max-h-[200px] overflow-y-auto">
                   {FOREIGNER_OPTIONAL_DOCS.filter(doc => !addedForeignerDocs.has(doc.id)).map((doc) => (
                     <button
                       key={doc.id}
@@ -389,11 +469,30 @@ export function DocumentRequirements({
                   )}
                 </div>
               )}
+
+              {/* 직접 서류 추가 버튼 */}
+              {!foreignerCustomInput.isOpen && (
+                <button
+                  onClick={() => setForeignerCustomInput({ isOpen: true, title: "", description: "" })}
+                  className="w-full flex items-center justify-center gap-2 p-3 mt-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span className="text-sm font-medium">직접 서류 추가</span>
+                </button>
+              )}
+
+              {/* 직접 서류 추가 인라인 입력 */}
+              <InlineCustomDocInput
+                input={foreignerCustomInput}
+                setInput={setForeignerCustomInput}
+                onAdd={addCustomForeignerDoc}
+                accentColor="blue"
+              />
             </div>
           </div>
 
           {/* 사업체 서류 */}
-          <div className="bg-white border-2 border-purple-200 rounded-2xl overflow-hidden">
+          <div className="bg-white border-2 border-purple-200 rounded-2xl overflow-hidden flex flex-col">
             <div className="bg-gradient-to-r from-purple-500 to-purple-600 px-5 py-4">
               <div className="flex items-center gap-2 text-white">
                 <Building2 className="w-5 h-5" />
@@ -403,7 +502,7 @@ export function DocumentRequirements({
                 </span>
               </div>
             </div>
-            <div className="p-4 space-y-2 max-h-[500px] overflow-y-auto">
+            <div className="p-4 space-y-2 flex-1 overflow-y-auto" style={{ maxHeight: "450px" }}>
               {activeCompanyDocs.map((doc) => (
                 <DocumentItemRow
                   key={doc.id}
@@ -418,19 +517,22 @@ export function DocumentRequirements({
                   }
                 />
               ))}
+            </div>
 
-              {/* 서류 추가 버튼 */}
+            {/* 하단 고정 버튼 영역 */}
+            <div className="p-4 border-t border-purple-100 bg-purple-50/30">
+              {/* 사전 정의 서류 추가 */}
               <button
                 onClick={() => setCompanyPanelOpen(!companyPanelOpen)}
-                className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-purple-300 rounded-xl text-purple-600 hover:bg-purple-50 transition-colors mt-3"
+                className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-purple-300 rounded-xl text-purple-600 hover:bg-purple-50 transition-colors"
               >
                 {companyPanelOpen ? <ChevronUp className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 <span className="text-sm font-medium">사전 정의 서류에서 추가</span>
               </button>
 
-              {/* 추가 가능한 서류 목록 */}
+              {/* 사전 정의 서류 목록 */}
               {companyPanelOpen && (
-                <div className="mt-3 p-3 bg-purple-50 rounded-xl space-y-2">
+                <div className="mt-3 p-3 bg-purple-50 rounded-xl space-y-2 max-h-[200px] overflow-y-auto">
                   {COMPANY_OPTIONAL_DOCS.filter(doc => !addedCompanyDocs.has(doc.id)).map((doc) => (
                     <button
                       key={doc.id}
@@ -449,6 +551,25 @@ export function DocumentRequirements({
                   )}
                 </div>
               )}
+
+              {/* 직접 서류 추가 버튼 */}
+              {!companyCustomInput.isOpen && (
+                <button
+                  onClick={() => setCompanyCustomInput({ isOpen: true, title: "", description: "" })}
+                  className="w-full flex items-center justify-center gap-2 p-3 mt-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span className="text-sm font-medium">직접 서류 추가</span>
+                </button>
+              )}
+
+              {/* 직접 서류 추가 인라인 입력 */}
+              <InlineCustomDocInput
+                input={companyCustomInput}
+                setInput={setCompanyCustomInput}
+                onAdd={addCustomCompanyDoc}
+                accentColor="purple"
+              />
             </div>
           </div>
         </div>
@@ -571,95 +692,6 @@ export function DocumentRequirements({
               <p className="text-xs text-gray-500 text-center">
                 생성된 링크는 외국인/사업체가 서류를 제출하면 이 화면에 자동 반영됩니다.
               </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 직접 서류 추가 모달 */}
-      {showAddDocModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">직접 서류 추가</h3>
-              <button onClick={() => setShowAddDocModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">서류 이름 *</label>
-                <input
-                  type="text"
-                  value={newDocData.title}
-                  onChange={(e) => setNewDocData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="예: 경력증명서"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">서류 설명</label>
-                <input
-                  type="text"
-                  value={newDocData.description}
-                  onChange={(e) => setNewDocData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="예: 최근 3년간 경력 포함"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">제출 대상</label>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setNewDocData(prev => ({ ...prev, target: "foreigner" }))}
-                    className={cn(
-                      "flex-1 py-3 rounded-xl border-2 font-medium transition-all flex items-center justify-center gap-2",
-                      newDocData.target === "foreigner"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300"
-                    )}
-                  >
-                    <User className="w-4 h-4" />
-                    외국인
-                  </button>
-                  <button
-                    onClick={() => setNewDocData(prev => ({ ...prev, target: "company" }))}
-                    className={cn(
-                      "flex-1 py-3 rounded-xl border-2 font-medium transition-all flex items-center justify-center gap-2",
-                      newDocData.target === "company"
-                        ? "border-purple-500 bg-purple-50 text-purple-700"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300"
-                    )}
-                  >
-                    <Building2 className="w-4 h-4" />
-                    사업체
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setShowAddDocModal(false)}
-                className="flex-1 py-3 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleAddCustomDoc}
-                disabled={!newDocData.title.trim()}
-                className={cn(
-                  "flex-1 py-3 rounded-xl font-medium transition-colors",
-                  newDocData.title.trim()
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                )}
-              >
-                추가하기
-              </button>
             </div>
           </div>
         </div>
