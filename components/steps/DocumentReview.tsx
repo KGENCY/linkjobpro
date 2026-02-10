@@ -566,12 +566,12 @@ export function DocumentReview({
         <div className="grid grid-cols-2 gap-6">
 
           {/* 외국인 서류 */}
-          <div className="bg-white border-2 border-blue-200 rounded-2xl overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-5 py-4">
-              <div className="flex items-center gap-2 text-white">
+          <div className="bg-white border-2 border-blue-100 rounded-2xl overflow-hidden">
+            <div className="bg-blue-50 px-5 py-4 border-b border-blue-100">
+              <div className="flex items-center gap-2 text-blue-700">
                 <User className="w-5 h-5" />
                 <h3 className="font-bold">외국인 제출 서류</h3>
-                <span className="ml-auto text-sm opacity-90">
+                <span className="ml-auto text-sm">
                   {foreignerConfirmed}/{foreignerSubmittedCount} 확인
                 </span>
               </div>
@@ -589,12 +589,12 @@ export function DocumentReview({
           </div>
 
           {/* 사업체 서류 */}
-          <div className="bg-white border-2 border-blue-200 rounded-2xl overflow-hidden">
-            <div className="bg-blue-600 px-5 py-4">
-              <div className="flex items-center gap-2 text-white">
+          <div className="bg-white border-2 border-blue-100 rounded-2xl overflow-hidden">
+            <div className="bg-blue-50 px-5 py-4 border-b border-blue-100">
+              <div className="flex items-center gap-2 text-blue-700">
                 <Building2 className="w-5 h-5" />
                 <h3 className="font-bold">사업체 제출 서류</h3>
-                <span className="ml-auto text-sm opacity-90">
+                <span className="ml-auto text-sm">
                   {companyConfirmed}/{companySubmittedCount} 확인
                 </span>
               </div>
