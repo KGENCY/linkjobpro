@@ -383,11 +383,7 @@ export function DocumentReview({
               <>
                 <button
                   onClick={() => handlePreview(fileInfo.name)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                  style={{
-                    backgroundColor: target === "foreigner" ? "#eff6ff" : "#faf5ff",
-                    color: target === "foreigner" ? "#2563eb" : "#9333ea"
-                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
                 >
                   <Eye className="w-4 h-4" />
                   미리보기
@@ -414,11 +410,7 @@ export function DocumentReview({
               <>
                 <button
                   onClick={() => handlePreview(fileInfo.name)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                  style={{
-                    backgroundColor: target === "foreigner" ? "#eff6ff" : "#faf5ff",
-                    color: target === "foreigner" ? "#2563eb" : "#9333ea"
-                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
                 >
                   <Eye className="w-4 h-4" />
                   미리보기
@@ -435,11 +427,7 @@ export function DocumentReview({
               <>
                 <button
                   onClick={() => handlePreview(fileInfo.name)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                  style={{
-                    backgroundColor: target === "foreigner" ? "#eff6ff" : "#faf5ff",
-                    color: target === "foreigner" ? "#2563eb" : "#9333ea"
-                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
                 >
                   <Eye className="w-4 h-4" />
                   미리보기
@@ -464,11 +452,7 @@ export function DocumentReview({
               <>
                 <button
                   onClick={() => handlePreview(fileInfo.name)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                  style={{
-                    backgroundColor: target === "foreigner" ? "#eff6ff" : "#faf5ff",
-                    color: target === "foreigner" ? "#2563eb" : "#9333ea"
-                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
                 >
                   <Eye className="w-4 h-4" />
                   미리보기
@@ -499,7 +483,7 @@ export function DocumentReview({
   // 렌더링
   // ─────────────────────────────────────────────────────────────
   return (
-    <div className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 via-white to-green-50/30">
+    <div className="flex-1 overflow-auto bg-slate-50">
       <div className="max-w-5xl mx-auto px-8 py-10">
 
         {/* 페이지 헤더 */}
@@ -568,7 +552,7 @@ export function DocumentReview({
               )}
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-purple-600 font-medium">
+              <span className="text-blue-600 font-medium">
                 사업체 {companyConfirmed}/{companySubmittedCount} 확인
               </span>
               {companyRevisionCount > 0 && (
@@ -605,8 +589,8 @@ export function DocumentReview({
           </div>
 
           {/* 사업체 서류 */}
-          <div className="bg-white border-2 border-purple-200 rounded-2xl overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 px-5 py-4">
+          <div className="bg-white border-2 border-blue-200 rounded-2xl overflow-hidden">
+            <div className="bg-blue-600 px-5 py-4">
               <div className="flex items-center gap-2 text-white">
                 <Building2 className="w-5 h-5" />
                 <h3 className="font-bold">사업체 제출 서류</h3>

@@ -372,7 +372,7 @@ export function DocumentRequirements({
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+    <div className="flex-1 overflow-auto bg-slate-50">
       <div className="max-w-5xl mx-auto px-8 py-10">
         {/* 헤더 */}
         <div className="mb-8">
@@ -397,13 +397,13 @@ export function DocumentRequirements({
           </div>
           <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all duration-500"
+              className="h-full bg-blue-500 rounded-full transition-all duration-500"
               style={{ width: `${totalRequired > 0 ? (totalSubmitted / totalRequired) * 100 : 0}%` }}
             />
           </div>
           <div className="flex justify-between mt-3 text-sm">
             <span className="text-blue-600 font-medium">외국인 {foreignerSubmitted}/{activeForeignerDocs.length}</span>
-            <span className="text-purple-600 font-medium">사업체 {companySubmitted}/{activeCompanyDocs.length}</span>
+            <span className="text-blue-600 font-medium">사업체 {companySubmitted}/{activeCompanyDocs.length}</span>
           </div>
         </div>
 
@@ -492,8 +492,8 @@ export function DocumentRequirements({
           </div>
 
           {/* 사업체 서류 */}
-          <div className="bg-white border-2 border-purple-200 rounded-2xl overflow-hidden flex flex-col">
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 px-5 py-4">
+          <div className="bg-white border-2 border-blue-200 rounded-2xl overflow-hidden flex flex-col">
+            <div className="bg-blue-600 px-5 py-4">
               <div className="flex items-center gap-2 text-white">
                 <Building2 className="w-5 h-5" />
                 <h3 className="font-bold">사업체 제출 서류</h3>
@@ -520,11 +520,11 @@ export function DocumentRequirements({
             </div>
 
             {/* 하단 고정 버튼 영역 */}
-            <div className="p-4 border-t border-purple-100 bg-purple-50/30">
+            <div className="p-4 border-t border-blue-100 bg-blue-50/30">
               {/* 사전 정의 서류 추가 */}
               <button
                 onClick={() => setCompanyPanelOpen(!companyPanelOpen)}
-                className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-purple-300 rounded-xl text-purple-600 hover:bg-purple-50 transition-colors"
+                className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-blue-300 rounded-xl text-blue-600 hover:bg-blue-50 transition-colors"
               >
                 {companyPanelOpen ? <ChevronUp className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 <span className="text-sm font-medium">사전 정의 서류에서 추가</span>
@@ -532,14 +532,14 @@ export function DocumentRequirements({
 
               {/* 사전 정의 서류 목록 */}
               {companyPanelOpen && (
-                <div className="mt-3 p-3 bg-purple-50 rounded-xl space-y-2 max-h-[200px] overflow-y-auto">
+                <div className="mt-3 p-3 bg-blue-50 rounded-xl space-y-2 max-h-[200px] overflow-y-auto">
                   {COMPANY_OPTIONAL_DOCS.filter(doc => !addedCompanyDocs.has(doc.id)).map((doc) => (
                     <button
                       key={doc.id}
                       onClick={() => toggleCompanyDoc(doc.id)}
-                      className="w-full flex items-center gap-2 p-2 bg-white rounded-lg border border-purple-200 hover:border-purple-400 transition-colors text-left"
+                      className="w-full flex items-center gap-2 p-2 bg-white rounded-lg border border-blue-200 hover:border-blue-400 transition-colors text-left"
                     >
-                      <Plus className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                      <Plus className="w-4 h-4 text-blue-500 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-gray-900">{doc.title}</div>
                         <div className="text-xs text-gray-500 truncate">{doc.description}</div>
@@ -556,7 +556,7 @@ export function DocumentRequirements({
               {!companyCustomInput.isOpen && (
                 <button
                   onClick={() => setCompanyCustomInput({ isOpen: true, title: "", description: "" })}
-                  className="w-full flex items-center justify-center gap-2 p-3 mt-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 p-3 mt-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
                 >
                   <Edit3 className="w-4 h-4" />
                   <span className="text-sm font-medium">직접 서류 추가</span>
@@ -568,14 +568,14 @@ export function DocumentRequirements({
                 input={companyCustomInput}
                 setInput={setCompanyCustomInput}
                 onAdd={addCustomCompanyDoc}
-                accentColor="purple"
+                accentColor="blue"
               />
             </div>
           </div>
         </div>
 
         {/* 하단 CTA */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-lg">
+        <div className="bg-blue-600 rounded-2xl p-6 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="text-white">
               <h3 className="font-bold text-lg mb-1">제출 서류 목록 전달</h3>
