@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +29,7 @@ interface Step3Props {
   onFormChange: (data: FormData) => void;
   documents: { employmentReason: string; jobDescription: string };
   onGenerateDocuments: () => void;
+  onResetDocuments: () => void;
   onSaveVersion: () => void;
   versions: number;
 }
@@ -45,12 +46,12 @@ export function Step3DocumentGeneration({
   onFormChange,
   documents,
   onGenerateDocuments,
+  onResetDocuments,
   onSaveVersion,
   versions,
 }: Step3Props) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingMessageIndex, setGeneratingMessageIndex] = useState(0);
-  const [showPreview, setShowPreview] = useState(false);
 
   const handleChange = (field: keyof FormData, value: string) => {
     onFormChange({ ...formData, [field]: value });
@@ -79,7 +80,6 @@ export function Step3DocumentGeneration({
 
   const handleGenerate = async () => {
     setIsGenerating(true);
-    setShowPreview(false);
     setGeneratingMessageIndex(0);
 
     // 문구 순차 변경
@@ -98,7 +98,6 @@ export function Step3DocumentGeneration({
     clearInterval(messageInterval);
     onGenerateDocuments();
     setIsGenerating(false);
-    setShowPreview(true);
   };
 
   return (
@@ -398,9 +397,7 @@ export function Step3DocumentGeneration({
               </p>
               <Button
                 size="lg"
-                onClick={() => {
-                  setShowPreview(false);
-                }}
+                onClick={onResetDocuments}
                 variant="outline"
                 className="h-12 px-8"
               >

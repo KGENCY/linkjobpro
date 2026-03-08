@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import {
-  Plus, Check, Circle, Send, User, Building2, ChevronDown, ChevronUp,
-  Copy, X, Eye, Clock, CheckCircle2, AlertCircle, Link as LinkIcon, Edit3
+  Plus, Check, Circle, Send, User, Building2, ChevronUp,
+  Copy, X, Eye, Clock, CheckCircle2, Link as LinkIcon, Edit3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,17 +17,12 @@ interface DocumentItem {
   isRequired: boolean;
   isCustom?: boolean;
   status: DocStatus;
-  submittedAt?: string;
-  fileName?: string;
 }
 
 interface DocumentRequirementsProps {
   caseId: string;
   foreignerDocs: Record<string, { name: string; uploadedAt: string } | null>;
   companyDocs: Record<string, { name: string; uploadedAt: string } | null>;
-  onForeignerFileChange: (docId: string, file: File | null) => void;
-  onCompanyFileChange: (docId: string, file: File | null) => void;
-  onSendRequirements: () => void;
 }
 
 // 외국인 필수 서류
@@ -88,9 +83,6 @@ export function DocumentRequirements({
   caseId,
   foreignerDocs,
   companyDocs,
-  onForeignerFileChange,
-  onCompanyFileChange,
-  onSendRequirements,
 }: DocumentRequirementsProps) {
   // 추가된 서류 ID 관리
   const [addedForeignerDocs, setAddedForeignerDocs] = useState<Set<string>>(new Set());

@@ -120,52 +120,6 @@ function WizardContent() {
     // TODO: 실제 구현 시 localStorage 또는 API로 저장
   };
 
-  // 파일 변경 핸들러
-  const handleForeignerFileChange = (docId: string, file: File | null) => {
-    if (file) {
-      setForeignerDocs({
-        ...foreignerDocs,
-        [docId]: {
-          name: file.name,
-          uploadedAt: new Date().toLocaleTimeString("ko-KR", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        },
-      });
-    } else {
-      setForeignerDocs({
-        ...foreignerDocs,
-        [docId]: null,
-      });
-    }
-  };
-
-  const handleCompanyFileChange = (docId: string, file: File | null) => {
-    if (file) {
-      setCompanyDocs({
-        ...companyDocs,
-        [docId]: {
-          name: file.name,
-          uploadedAt: new Date().toLocaleTimeString("ko-KR", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        },
-      });
-    } else {
-      setCompanyDocs({
-        ...companyDocs,
-        [docId]: null,
-      });
-    }
-  };
-
-  // 제출 서류 목록 보내기
-  const handleSendRequirements = () => {
-    alert("제출 서류 목록 링크가 생성되었습니다.\n외국인과 사업체에게 전달하세요.");
-  };
-
   // 서류 검토 상태 변경
   const handleReviewStatusChange = (
     docId: string,
@@ -325,9 +279,6 @@ ${formData.jobSummary}
             caseId={caseId || "demo"}
             foreignerDocs={foreignerDocs}
             companyDocs={companyDocs}
-            onForeignerFileChange={handleForeignerFileChange}
-            onCompanyFileChange={handleCompanyFileChange}
-            onSendRequirements={handleSendRequirements}
           />
         )}
 
@@ -336,7 +287,6 @@ ${formData.jobSummary}
             foreignerDocs={foreignerDocs}
             companyDocs={companyDocs}
             onStatusChange={handleReviewStatusChange}
-            scenarioMode={isScenarioMode}
           />
         )}
 
@@ -346,6 +296,7 @@ ${formData.jobSummary}
             onFormChange={setFormData}
             documents={generatedDocs}
             onGenerateDocuments={handleGenerateDocuments}
+            onResetDocuments={() => setGeneratedDocs({ employmentReason: "", jobDescription: "" })}
             onSaveVersion={handleSaveVersion}
             versions={documentVersions}
           />

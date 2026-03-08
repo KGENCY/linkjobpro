@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  User, Building2, Check, X, Eye, AlertTriangle,
+  User, Building2, Check, Eye, AlertTriangle,
   CheckCircle2, Clock, FileText, Send, FileX, RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,6 @@ interface DocumentReviewProps {
   foreignerDocs: Record<string, { name: string; uploadedAt: string } | null>;
   companyDocs: Record<string, { name: string; uploadedAt: string } | null>;
   onStatusChange: (docId: string, status: ReviewStatus, target: "foreigner" | "company", note?: string) => void;
-  scenarioMode?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -80,29 +79,13 @@ export function DocumentReview({
   foreignerDocs,
   companyDocs,
   onStatusChange,
-  scenarioMode = false,
 }: DocumentReviewProps) {
 
   // ─────────────────────────────────────────────────────────────
-  // 초기 상태: 모든 서류는 '미판단' 상태로 시작
-  // - 행정사가 직접 버튼을 눌러 판단을 진행해야 함
-  // - 시스템이 임의로 '확인 완료' 또는 '보완 요청'을 미리 설정하지 않음
+  // 상태 관리 (모든 서류는 '미판단' 상태로 시작)
   // ─────────────────────────────────────────────────────────────
-  const getInitialStatus = (): Record<string, ReviewStatus> => {
-    // 화면 진입 시 모든 제출된 서류는 "submitted" (미판단) 상태
-    return {};
-  };
-
-  const getInitialRevisionInfo = (): Record<string, RevisionInfo> => {
-    // 화면 진입 시 보완 사유 없음
-    return {};
-  };
-
-  // ─────────────────────────────────────────────────────────────
-  // 상태 관리
-  // ─────────────────────────────────────────────────────────────
-  const [reviewStatus, setReviewStatus] = useState<Record<string, ReviewStatus>>(getInitialStatus);
-  const [revisionInfo, setRevisionInfo] = useState<Record<string, RevisionInfo>>(getInitialRevisionInfo);
+  const [reviewStatus, setReviewStatus] = useState<Record<string, ReviewStatus>>({});
+  const [revisionInfo, setRevisionInfo] = useState<Record<string, RevisionInfo>>({});
 
   // 현재 보완 사유 입력 중인 카드 (인라인 입력)
   const [editingDocId, setEditingDocId] = useState<string | null>(null);
