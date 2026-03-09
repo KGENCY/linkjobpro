@@ -4,11 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileArchive, Printer, CheckCircle2, Circle } from "lucide-react";
-
-interface UploadedFile {
-  name: string;
-  uploadedAt: string;
-}
+import type { UploadedFile } from "@/lib/types";
 
 interface Step4Props {
   foreignerDocs: Record<string, UploadedFile | null>;
@@ -19,7 +15,7 @@ interface Step4Props {
   onPrintDocumentsOnly: () => void;
 }
 
-export function Step4FinalExport({
+export function FinalExport({
   foreignerDocs,
   companyDocs,
   generatedDocs,

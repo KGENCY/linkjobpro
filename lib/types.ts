@@ -1,3 +1,17 @@
+export interface UploadedFile {
+  name: string;
+  uploadedAt: string;
+}
+
+export type DocTarget = "foreigner" | "company";
+
+export type DocStatus =
+  | "not_submitted"
+  | "submitted"
+  | "confirmed"
+  | "revision_requested"
+  | "resubmitted";
+
 export type CaseStatus =
   | "collecting"    // 수집중
   | "writing"       // 작성중
@@ -44,82 +58,3 @@ export const STEP_LABELS: Record<CaseStep, string> = {
   3: "서류 생성",
   4: "최종 출력",
 };
-
-// 외국인 서류 타입
-export type ForeignerDocType =
-  | "passport"
-  | "arc"
-  | "photo"
-  | "diploma"
-  | "transcript"
-  | "addressProof";
-
-// 사업체 서류 타입
-export type CompanyDocType =
-  | "bizRegistration"
-  | "employmentContract"
-  | "taxPayment"
-  | "companyIntro"
-  | "orgChart"
-  | "financialStatement";
-
-// 문서 파일 데이터
-export interface DocumentFile {
-  name: string;
-  size: number;
-  type: string;
-  data: string; // Base64 encoded
-  uploadedAt: string;
-}
-
-// 제출 상태
-export interface SubmissionState {
-  isSubmitted: boolean;
-  submittedAt?: string;
-}
-
-// 확장된 케이스 (localStorage에서 사용)
-export interface ExtendedCase extends Case {
-  tokens?: {
-    foreignerToken: string;
-    companyToken: string;
-  };
-  foreignerSubmission?: SubmissionState;
-  companySubmission?: SubmissionState;
-  foreignerDocs: Partial<Record<ForeignerDocType, DocumentFile>>;
-  companyDocs: Partial<Record<CompanyDocType, DocumentFile>>;
-  formData?: DocumentFormData;
-  generatedDocs?: GeneratedDocuments;
-}
-
-// 문서 폼 데이터
-export interface DocumentFormData {
-  companyName: string;
-  industry: string;
-  employeeCount: string;
-  address: string;
-  jobTitle: string;
-  jobSummary: string;
-  hiringReason: string;
-  salary: string;
-  workHours: string;
-  dormitory: string;
-  foreignerName: string;
-  nationality: string;
-  major: string;
-}
-
-// 생성된 문서
-export interface GeneratedDocuments {
-  employmentReason: string;
-  jobDescription: string;
-}
-
-// 단계 활성화 상태
-export interface StepActivationState {
-  step1: boolean;
-  step2: boolean;
-  step3: boolean;
-  step4: boolean;
-  recommendedStep: CaseStep | null;
-}

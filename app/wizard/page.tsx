@@ -7,15 +7,11 @@ import { CaseHeaderBar } from "@/components/wizard/CaseHeaderBar";
 import { NavigationButtons } from "@/components/wizard/NavigationButtons";
 import { DocumentRequirements } from "@/components/steps/DocumentRequirements";
 import { DocumentReview } from "@/components/steps/DocumentReview";
-import { Step3DocumentGeneration } from "@/components/steps/Step3DocumentGeneration";
-import { Step4FinalExport } from "@/components/steps/Step4FinalExport";
+import { DocumentGeneration } from "@/components/steps/DocumentGeneration";
+import { FinalExport } from "@/components/steps/FinalExport";
 import { AnalyzingOverlay } from "@/components/wizard/AnalyzingOverlay";
 import { ArrowLeft } from "lucide-react";
-
-interface UploadedFile {
-  name: string;
-  uploadedAt: string;
-}
+import type { UploadedFile } from "@/lib/types";
 
 // Nguyen Van A 케이스 시나리오 데이터
 const SCENARIO_CASE_ID = "case-001";
@@ -291,7 +287,7 @@ ${formData.jobSummary}
         )}
 
         {currentStep === 3 && (
-          <Step3DocumentGeneration
+          <DocumentGeneration
             formData={formData}
             onFormChange={setFormData}
             documents={generatedDocs}
@@ -303,7 +299,7 @@ ${formData.jobSummary}
         )}
 
         {currentStep === 4 && (
-          <Step4FinalExport
+          <FinalExport
             foreignerDocs={foreignerDocs}
             companyDocs={companyDocs}
             generatedDocs={generatedDocs}

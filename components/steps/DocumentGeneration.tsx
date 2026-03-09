@@ -41,7 +41,7 @@ const generatingMessages = [
   "마지막 문장 점검 중... 거의 완료!",
 ];
 
-export function Step3DocumentGeneration({
+export function DocumentGeneration({
   formData,
   onFormChange,
   documents,

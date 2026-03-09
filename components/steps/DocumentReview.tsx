@@ -3,21 +3,14 @@
 import { useState } from "react";
 import {
   User, Building2, Check, Eye, AlertTriangle,
-  CheckCircle2, Clock, FileText, Send, FileX, RotateCcw
+  CheckCircle2, Clock, FileText, Send, FileX
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/format";
+import { FOREIGNER_DOCS, COMPANY_DOCS, type DocDefinition } from "@/lib/doc-constants";
+import { StatusBadge } from "@/components/steps/shared/StatusBadge";
+import type { DocStatus, DocTarget, UploadedFile } from "@/lib/types";
 
-// ─────────────────────────────────────────────────────────────
-// 서류 상태 정의
-// ─────────────────────────────────────────────────────────────
-type ReviewStatus =
-  | "not_submitted"      // 미제출
-  | "submitted"          // 제출 완료
-  | "confirmed"          // 확인 완료
-  | "revision_requested" // 보완 요청
-  | "resubmitted";       // 재제출 완료
-
-// 보완 요청 정보
 interface RevisionInfo {
   note: string;
   requestedAt: string;
@@ -25,145 +18,260 @@ interface RevisionInfo {
 }
 
 interface DocumentReviewProps {
-  foreignerDocs: Record<string, { name: string; uploadedAt: string } | null>;
-  companyDocs: Record<string, { name: string; uploadedAt: string } | null>;
-  onStatusChange: (docId: string, status: ReviewStatus, target: "foreigner" | "company", note?: string) => void;
+  foreignerDocs: Record<string, UploadedFile | null>;
+  companyDocs: Record<string, UploadedFile | null>;
+  onStatusChange: (docId: string, status: DocStatus, target: DocTarget, note?: string) => void;
 }
 
-// ─────────────────────────────────────────────────────────────
-// 서류 목록 (제출 서류 요건 단계에서 정의된 항목)
-// ─────────────────────────────────────────────────────────────
-const FOREIGNER_DOCS = [
-  { id: "passport", title: "여권 사본", description: "여권 사진면 포함", isRequired: true },
-  { id: "arc", title: "외국인등록증 사본", description: "앞뒤면 모두", isRequired: true },
-  { id: "photo", title: "증명사진", description: "3.5x4.5cm, 6개월 이내", isRequired: true },
-  { id: "diploma", title: "졸업증명서", description: "최종학력 (영문/한글)", isRequired: true },
-  { id: "transcript", title: "성적증명서", description: "최종학력 성적증명서", isRequired: false },
-  { id: "address", title: "주소 증빙", description: "임대차계약서 또는 기숙사 확인서", isRequired: false },
-];
+interface DocumentCardProps {
+  doc: DocDefinition;
+  fileInfo: UploadedFile | null;
+  target: DocTarget;
+  status: DocStatus;
+  revisionInfo?: RevisionInfo;
+  isEditing: boolean;
+  revisionNote: string;
+  onRevisionNoteChange: (note: string) => void;
+  onPreview: (fileName: string) => void;
+  onConfirm: (docId: string, target: DocTarget) => void;
+  onStartRevision: (docId: string) => void;
+  onCancelRevision: () => void;
+  onSaveRevision: (docId: string, target: DocTarget) => void;
+  onSendResubmitRequest: (docId: string, docTitle: string, target: DocTarget) => void;
+}
 
-const COMPANY_DOCS = [
-  { id: "business_license", title: "사업자등록증", description: "최신본 사본", isRequired: true },
-  { id: "insurance_list", title: "4대보험 가입자 명부", description: "1개월 이내 발급", isRequired: true },
-  { id: "sales_proof", title: "매출 증빙", description: "부가세 과세표준증명 등", isRequired: true },
-  { id: "office_photos", title: "사업장 사진", description: "근무 공간 전경", isRequired: true },
-  { id: "employment_contract", title: "고용계약서", description: "서명 완료본", isRequired: true },
-  { id: "corporate_register", title: "법인등기부등본", description: "법인인 경우, 3개월 이내", isRequired: false },
-];
+function DocumentCard({
+  doc, fileInfo, target, status, revisionInfo: docRevisionInfo,
+  isEditing, revisionNote,
+  onRevisionNoteChange, onPreview, onConfirm,
+  onStartRevision, onCancelRevision, onSaveRevision, onSendResubmitRequest,
+}: DocumentCardProps) {
+  const isSubmitted = !!fileInfo;
 
-// ─────────────────────────────────────────────────────────────
-// 상태 배지 컴포넌트
-// ─────────────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: ReviewStatus }) {
-  const config = {
-    not_submitted: { label: "미제출", color: "bg-gray-100 text-gray-500", icon: FileX },
-    submitted: { label: "제출 완료", color: "bg-blue-100 text-blue-700", icon: FileText },
-    confirmed: { label: "확인 완료", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
-    revision_requested: { label: "보완 요청", color: "bg-amber-100 text-amber-700", icon: AlertTriangle },
-    resubmitted: { label: "재제출 완료", color: "bg-indigo-100 text-indigo-700", icon: RotateCcw },
-  };
-  const { label, color, icon: Icon } = config[status];
+  const cardStyle = {
+    not_submitted: "bg-gray-50 border-gray-200 border-dashed",
+    confirmed: "bg-green-50 border-green-200",
+    revision_requested: "bg-amber-50 border-amber-300",
+    resubmitted: "bg-indigo-50 border-indigo-200",
+    submitted: "bg-white border-gray-200",
+  }[status];
 
   return (
-    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold", color)}>
-      <Icon className="w-3.5 h-3.5" />
-      {label}
-    </span>
+    <div className={cn("p-4 rounded-xl border-2 transition-all", cardStyle)}>
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className={cn("font-semibold", status === "not_submitted" ? "text-gray-400" : "text-gray-900")}>
+              {doc.title}
+            </h4>
+            {doc.isRequired && (
+              <span className={cn(
+                "px-1.5 py-0.5 text-[10px] font-bold rounded",
+                status === "not_submitted" ? "bg-red-50 text-red-400" : "bg-red-100 text-red-600"
+              )}>
+                필수
+              </span>
+            )}
+          </div>
+        </div>
+        {status !== "submitted" && <StatusBadge status={status} />}
+      </div>
+
+      {isSubmitted ? (
+        <div className="flex items-center gap-2 p-2.5 bg-white/70 rounded-lg mb-3 border border-gray-100">
+          <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <span className="text-sm text-gray-700 flex-1 truncate">{fileInfo.name}</span>
+          <span className="text-xs text-gray-400 flex-shrink-0">{fileInfo.uploadedAt}</span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 p-2.5 bg-gray-100/50 rounded-lg mb-3 border border-dashed border-gray-200">
+          <FileX className="w-4 h-4 text-gray-300" />
+          <span className="text-sm text-gray-400 flex-1">아직 제출되지 않은 서류입니다</span>
+        </div>
+      )}
+
+      {isEditing && (
+        <div className="mb-3 p-4 bg-amber-50 border border-amber-300 rounded-lg">
+          <label className="block text-sm font-semibold text-amber-800 mb-2">보완 사유</label>
+          <textarea
+            value={revisionNote}
+            onChange={(e) => onRevisionNoteChange(e.target.value)}
+            placeholder="예: 여권 번호가 흐릿합니다. 선명한 사본으로 다시 제출해 주세요."
+            rows={3}
+            autoFocus
+            className="w-full px-3 py-2.5 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-sm bg-white"
+          />
+          <div className="flex justify-end gap-2 mt-3">
+            <button
+              onClick={onCancelRevision}
+              className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              취소
+            </button>
+            <button
+              onClick={() => onSaveRevision(doc.id, target)}
+              disabled={!revisionNote.trim()}
+              className={cn(
+                "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                revisionNote.trim()
+                  ? "bg-amber-500 text-white hover:bg-amber-600"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              )}
+            >
+              보완 사유 저장
+            </button>
+          </div>
+        </div>
+      )}
+
+      {status === "revision_requested" && docRevisionInfo && !isEditing && (
+        <div className="mb-3 p-3 bg-amber-100/70 border border-amber-200 rounded-lg">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-800 mb-1">보완 사유</p>
+              <p className="text-sm text-amber-700 leading-relaxed">{docRevisionInfo.note}</p>
+              <p className="text-xs text-amber-600 mt-2">
+                요청일시: {docRevisionInfo.requestedAt}
+                {docRevisionInfo.sentAt && (
+                  <span className="ml-3 text-green-600 font-medium">✓ 전송됨: {docRevisionInfo.sentAt}</span>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isEditing && (
+        <div className="flex items-center gap-2">
+          {status === "not_submitted" && (
+            <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-gray-400 text-sm">
+              <Clock className="w-4 h-4" />
+              제출 대기 중
+            </div>
+          )}
+
+          {(status === "submitted" || status === "resubmitted") && isSubmitted && (
+            <>
+              <button
+                onClick={() => onPreview(fileInfo.name)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                미리보기
+              </button>
+              <button
+                onClick={() => onConfirm(doc.id, target)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <Check className="w-4 h-4" />
+                확인 완료
+              </button>
+              <button
+                onClick={() => onStartRevision(doc.id)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                보완하기
+              </button>
+            </>
+          )}
+
+          {status === "confirmed" && isSubmitted && (
+            <>
+              <button
+                onClick={() => onPreview(fileInfo.name)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                미리보기
+              </button>
+              <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-green-600 text-sm font-medium">
+                <CheckCircle2 className="w-4 h-4" />
+                확인 완료됨
+              </div>
+            </>
+          )}
+
+          {status === "revision_requested" && isSubmitted && (
+            <>
+              <button
+                onClick={() => onPreview(fileInfo.name)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                미리보기
+              </button>
+              <button
+                onClick={() => onSendResubmitRequest(doc.id, doc.title, target)}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  docRevisionInfo?.sentAt
+                    ? "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                    : "bg-amber-500 text-white hover:bg-amber-600"
+                )}
+              >
+                <Send className="w-4 h-4" />
+                {docRevisionInfo?.sentAt ? "재전송" : "재제출 요청"}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// 메인 컴포넌트
-// ─────────────────────────────────────────────────────────────
 export function DocumentReview({
   foreignerDocs,
   companyDocs,
   onStatusChange,
 }: DocumentReviewProps) {
-
-  // ─────────────────────────────────────────────────────────────
-  // 상태 관리 (모든 서류는 '미판단' 상태로 시작)
-  // ─────────────────────────────────────────────────────────────
-  const [reviewStatus, setReviewStatus] = useState<Record<string, ReviewStatus>>({});
+  const [reviewStatus, setReviewStatus] = useState<Record<string, DocStatus>>({});
   const [revisionInfo, setRevisionInfo] = useState<Record<string, RevisionInfo>>({});
-
-  // 현재 보완 사유 입력 중인 카드 (인라인 입력)
   const [editingDocId, setEditingDocId] = useState<string | null>(null);
   const [revisionNote, setRevisionNote] = useState("");
 
-  // ─────────────────────────────────────────────────────────────
-  // 헬퍼 함수
-  // ─────────────────────────────────────────────────────────────
-  const getStatus = (docId: string): ReviewStatus => reviewStatus[docId] || "submitted";
-
-  const isDocSubmitted = (docId: string, target: "foreigner" | "company") => {
-    return target === "foreigner" ? !!foreignerDocs[docId] : !!companyDocs[docId];
-  };
-
-  const getActualStatus = (docId: string, target: "foreigner" | "company"): ReviewStatus => {
-    if (!isDocSubmitted(docId, target)) return "not_submitted";
+  const getStatus = (docId: string, target: DocTarget): DocStatus => {
+    const docs = target === "foreigner" ? foreignerDocs : companyDocs;
+    if (!docs[docId]) return "not_submitted";
     return reviewStatus[docId] || "submitted";
   };
 
-  const formatDateTime = () => {
-    return new Date().toLocaleString("ko-KR", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).replace(/\. /g, "-").replace(".", "");
-  };
-
-  // ─────────────────────────────────────────────────────────────
-  // 액션 핸들러
-  // ─────────────────────────────────────────────────────────────
-
-  // 미리보기
   const handlePreview = (fileName: string) => {
     alert(`파일 미리보기: ${fileName}\n\n(실제 구현 시 PDF/이미지 뷰어 표시)`);
   };
 
-  // 확인 완료
-  const handleConfirm = (docId: string, target: "foreigner" | "company") => {
+  const handleConfirm = (docId: string, target: DocTarget) => {
     setReviewStatus(prev => ({ ...prev, [docId]: "confirmed" }));
     onStatusChange(docId, "confirmed", target);
   };
 
-  // 보완하기 클릭 → 인라인 입력 UI 열기
   const handleStartRevision = (docId: string) => {
     setEditingDocId(docId);
     setRevisionNote("");
   };
 
-  // 보완 사유 입력 취소
   const handleCancelRevision = () => {
     setEditingDocId(null);
     setRevisionNote("");
   };
 
-  // 보완 사유 저장
-  const handleSaveRevision = (docId: string, target: "foreigner" | "company") => {
+  const handleSaveRevision = (docId: string, target: DocTarget) => {
     if (!revisionNote.trim()) return;
 
     const now = formatDateTime();
-
     setReviewStatus(prev => ({ ...prev, [docId]: "revision_requested" }));
     setRevisionInfo(prev => ({
       ...prev,
-      [docId]: {
-        note: revisionNote.trim(),
-        requestedAt: now,
-      },
+      [docId]: { note: revisionNote.trim(), requestedAt: now },
     }));
     onStatusChange(docId, "revision_requested", target, revisionNote.trim());
-
     setEditingDocId(null);
     setRevisionNote("");
   };
 
-  // 재제출 요청 전송
-  const handleSendResubmitRequest = (docId: string, docTitle: string, target: "foreigner" | "company") => {
+  const handleSendResubmitRequest = (docId: string, docTitle: string, target: DocTarget) => {
     const targetLabel = target === "foreigner" ? "외국인" : "사업체";
     const info = revisionInfo[docId];
     const now = formatDateTime();
@@ -185,20 +293,22 @@ export function DocumentReview({
     );
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // 통계 계산
-  // ─────────────────────────────────────────────────────────────
-  const foreignerSubmittedCount = FOREIGNER_DOCS.filter(doc => foreignerDocs[doc.id]).length;
-  const companySubmittedCount = COMPANY_DOCS.filter(doc => companyDocs[doc.id]).length;
-  const foreignerConfirmed = FOREIGNER_DOCS.filter(doc => foreignerDocs[doc.id] && getStatus(doc.id) === "confirmed").length;
-  const companyConfirmed = COMPANY_DOCS.filter(doc => companyDocs[doc.id] && getStatus(doc.id) === "confirmed").length;
-  const foreignerRevisionCount = FOREIGNER_DOCS.filter(doc => getStatus(doc.id) === "revision_requested").length;
-  const companyRevisionCount = COMPANY_DOCS.filter(doc => getStatus(doc.id) === "revision_requested").length;
+  const calcStats = (docs: DocDefinition[], target: DocTarget) => {
+    const uploaded = target === "foreigner" ? foreignerDocs : companyDocs;
+    const submittedCount = docs.filter(doc => uploaded[doc.id]).length;
+    const confirmedCount = docs.filter(doc => getStatus(doc.id, target) === "confirmed").length;
+    const revisionCount = docs.filter(doc => getStatus(doc.id, target) === "revision_requested").length;
+    return { submittedCount, confirmedCount, revisionCount };
+  };
+
+  const foreignerStats = calcStats(FOREIGNER_DOCS, "foreigner");
+  const companyStats = calcStats(COMPANY_DOCS, "company");
 
   const totalDocs = FOREIGNER_DOCS.length + COMPANY_DOCS.length;
-  const totalSubmitted = foreignerSubmittedCount + companySubmittedCount;
-  const totalConfirmed = foreignerConfirmed + companyConfirmed;
-  const totalRevisionCount = foreignerRevisionCount + companyRevisionCount;
+  const totalSubmitted = foreignerStats.submittedCount + companyStats.submittedCount;
+  const totalConfirmed = foreignerStats.confirmedCount + companyStats.confirmedCount;
+  const totalRevisionCount = foreignerStats.revisionCount + companyStats.revisionCount;
+  const hasRevisionRequests = totalRevisionCount > 0;
 
   const requiredForeignerDocs = FOREIGNER_DOCS.filter(doc => doc.isRequired);
   const requiredCompanyDocs = COMPANY_DOCS.filter(doc => doc.isRequired);
@@ -207,273 +317,57 @@ export function DocumentReview({
     requiredCompanyDocs.every(doc => companyDocs[doc.id]);
   const allRequiredConfirmed =
     allRequiredSubmitted &&
-    requiredForeignerDocs.every(doc => getStatus(doc.id) === "confirmed") &&
-    requiredCompanyDocs.every(doc => getStatus(doc.id) === "confirmed");
+    requiredForeignerDocs.every(doc => getStatus(doc.id, "foreigner") === "confirmed") &&
+    requiredCompanyDocs.every(doc => getStatus(doc.id, "company") === "confirmed");
 
-  const hasRevisionRequests = totalRevisionCount > 0;
-
-  // ─────────────────────────────────────────────────────────────
-  // 서류 카드 컴포넌트
-  // ─────────────────────────────────────────────────────────────
-  const DocumentCard = ({
-    doc,
-    fileInfo,
-    target,
-  }: {
-    doc: typeof FOREIGNER_DOCS[0];
-    fileInfo: { name: string; uploadedAt: string } | null;
-    target: "foreigner" | "company";
-  }) => {
-    const status = getActualStatus(doc.id, target);
-    const isSubmitted = !!fileInfo;
-    const docRevisionInfo = revisionInfo[doc.id];
-    const isEditing = editingDocId === doc.id;
-
-    // 카드 배경색 결정
-    const getCardStyle = () => {
-      switch (status) {
-        case "not_submitted":
-          return "bg-gray-50 border-gray-200 border-dashed";
-        case "confirmed":
-          return "bg-green-50 border-green-200";
-        case "revision_requested":
-          return "bg-amber-50 border-amber-300";
-        case "resubmitted":
-          return "bg-indigo-50 border-indigo-200";
-        default:
-          return "bg-white border-gray-200";
-      }
+  const getStatusMessage = () => {
+    if (allRequiredConfirmed) {
+      return {
+        bg: "bg-green-50 border-green-200",
+        icon: <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />,
+        title: "모든 필수 서류 검토 완료",
+        desc: "모든 필수 서류 확인이 완료되었습니다. 하단의 '다음' 버튼을 눌러 서류 생성 단계로 진행하세요.",
+        titleColor: "text-green-800",
+        descColor: "text-green-700",
+      };
+    }
+    if (!allRequiredSubmitted) {
+      return {
+        bg: "bg-gray-50 border-gray-200",
+        icon: <Clock className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />,
+        title: "필수 서류 제출 대기 중",
+        desc: "아직 모든 필수 서류가 제출되지 않았습니다. 외국인과 사업체가 서류를 모두 제출한 후 검토를 진행해주세요.",
+        titleColor: "text-gray-700",
+        descColor: "text-gray-600",
+      };
+    }
+    if (hasRevisionRequests) {
+      return {
+        bg: "bg-amber-50 border-amber-300",
+        icon: <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />,
+        title: `보완 요청 ${totalRevisionCount}건 처리 대기 중`,
+        desc: "문제가 있는 서류에 대해 보완 요청이 등록되었습니다. '재제출 요청' 버튼을 눌러 외국인/사업체에게 알림을 전송하세요.",
+        titleColor: "text-amber-800",
+        descColor: "text-amber-700",
+      };
+    }
+    return {
+      bg: "bg-blue-50 border-blue-200",
+      icon: <Eye className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />,
+      title: "서류 검토를 진행해주세요",
+      desc: "각 서류를 미리보기로 확인한 후 '확인 완료' 또는 '보완하기'를 선택해주세요. 모든 필수 서류가 '확인 완료' 상태가 되어야 다음 단계로 진행할 수 있습니다.",
+      titleColor: "text-blue-800",
+      descColor: "text-blue-700",
     };
-
-    return (
-      <div className={cn("p-4 rounded-xl border-2 transition-all", getCardStyle())}>
-
-        {/* ────────────────────────────────────────────────────────
-            카드 상단: 서류명 + 필수 배지 + 상태 배지
-            ──────────────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h4 className={cn("font-semibold", status === "not_submitted" ? "text-gray-400" : "text-gray-900")}>
-                {doc.title}
-              </h4>
-              {doc.isRequired && (
-                <span className={cn(
-                  "px-1.5 py-0.5 text-[10px] font-bold rounded",
-                  status === "not_submitted" ? "bg-red-50 text-red-400" : "bg-red-100 text-red-600"
-                )}>
-                  필수
-                </span>
-              )}
-            </div>
-          </div>
-          {/* 미판단(submitted) 상태에서는 상태 배지 표시하지 않음 */}
-          {status !== "submitted" && <StatusBadge status={status} />}
-        </div>
-
-        {/* ────────────────────────────────────────────────────────
-            카드 본문: 파일 정보
-            ──────────────────────────────────────────────────────── */}
-        {isSubmitted ? (
-          <div className="flex items-center gap-2 p-2.5 bg-white/70 rounded-lg mb-3 border border-gray-100">
-            <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            <span className="text-sm text-gray-700 flex-1 truncate">{fileInfo.name}</span>
-            <span className="text-xs text-gray-400 flex-shrink-0">{fileInfo.uploadedAt}</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 p-2.5 bg-gray-100/50 rounded-lg mb-3 border border-dashed border-gray-200">
-            <FileX className="w-4 h-4 text-gray-300" />
-            <span className="text-sm text-gray-400 flex-1">아직 제출되지 않은 서류입니다</span>
-          </div>
-        )}
-
-        {/* ────────────────────────────────────────────────────────
-            보완 사유 입력 UI (인라인) - 보완하기 클릭 시 노출
-            ──────────────────────────────────────────────────────── */}
-        {isEditing && (
-          <div className="mb-3 p-4 bg-amber-50 border border-amber-300 rounded-lg">
-            <label className="block text-sm font-semibold text-amber-800 mb-2">
-              보완 사유
-            </label>
-            <textarea
-              value={revisionNote}
-              onChange={(e) => setRevisionNote(e.target.value)}
-              placeholder="예: 여권 번호가 흐릿합니다. 선명한 사본으로 다시 제출해 주세요."
-              rows={3}
-              autoFocus
-              className="w-full px-3 py-2.5 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-sm bg-white"
-            />
-            <div className="flex justify-end gap-2 mt-3">
-              <button
-                onClick={handleCancelRevision}
-                className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => handleSaveRevision(doc.id, target)}
-                disabled={!revisionNote.trim()}
-                className={cn(
-                  "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
-                  revisionNote.trim()
-                    ? "bg-amber-500 text-white hover:bg-amber-600"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                )}
-              >
-                보완 사유 저장
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ────────────────────────────────────────────────────────
-            보완 사유 읽기 전용 박스 (보완 요청 상태)
-            ──────────────────────────────────────────────────────── */}
-        {status === "revision_requested" && docRevisionInfo && !isEditing && (
-          <div className="mb-3 p-3 bg-amber-100/70 border border-amber-200 rounded-lg">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-amber-800 mb-1">보완 사유</p>
-                <p className="text-sm text-amber-700 leading-relaxed">{docRevisionInfo.note}</p>
-                <p className="text-xs text-amber-600 mt-2">
-                  요청일시: {docRevisionInfo.requestedAt}
-                  {docRevisionInfo.sentAt && (
-                    <span className="ml-3 text-green-600 font-medium">✓ 전송됨: {docRevisionInfo.sentAt}</span>
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ────────────────────────────────────────────────────────
-            카드 하단: 액션 버튼 영역
-            ──────────────────────────────────────────────────────── */}
-        {!isEditing && (
-          <div className="flex items-center gap-2">
-
-            {/* 미제출 상태 */}
-            {status === "not_submitted" && (
-              <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-gray-400 text-sm">
-                <Clock className="w-4 h-4" />
-                제출 대기 중
-              </div>
-            )}
-
-            {/* 제출 완료 상태: [미리보기] [확인 완료] [보완하기] */}
-            {status === "submitted" && isSubmitted && (
-              <>
-                <button
-                  onClick={() => handlePreview(fileInfo.name)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
-                >
-                  <Eye className="w-4 h-4" />
-                  미리보기
-                </button>
-                <button
-                  onClick={() => handleConfirm(doc.id, target)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  <Check className="w-4 h-4" />
-                  확인 완료
-                </button>
-                <button
-                  onClick={() => handleStartRevision(doc.id)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  <AlertTriangle className="w-4 h-4" />
-                  보완하기
-                </button>
-              </>
-            )}
-
-            {/* 확인 완료 상태: [미리보기] ✔ 확인 완료됨 */}
-            {status === "confirmed" && isSubmitted && (
-              <>
-                <button
-                  onClick={() => handlePreview(fileInfo.name)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
-                >
-                  <Eye className="w-4 h-4" />
-                  미리보기
-                </button>
-                <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-green-600 text-sm font-medium">
-                  <CheckCircle2 className="w-4 h-4" />
-                  확인 완료됨
-                </div>
-              </>
-            )}
-
-            {/* 보완 요청 상태: [미리보기] [재제출 요청] */}
-            {status === "revision_requested" && isSubmitted && (
-              <>
-                <button
-                  onClick={() => handlePreview(fileInfo.name)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
-                >
-                  <Eye className="w-4 h-4" />
-                  미리보기
-                </button>
-                <button
-                  onClick={() => handleSendResubmitRequest(doc.id, doc.title, target)}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    docRevisionInfo?.sentAt
-                      ? "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                      : "bg-amber-500 text-white hover:bg-amber-600"
-                  )}
-                >
-                  <Send className="w-4 h-4" />
-                  {docRevisionInfo?.sentAt ? "재전송" : "재제출 요청"}
-                </button>
-              </>
-            )}
-
-            {/* 재제출 완료 상태: [미리보기] [확인 완료] [보완하기] */}
-            {status === "resubmitted" && isSubmitted && (
-              <>
-                <button
-                  onClick={() => handlePreview(fileInfo.name)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
-                >
-                  <Eye className="w-4 h-4" />
-                  미리보기
-                </button>
-                <button
-                  onClick={() => handleConfirm(doc.id, target)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  <Check className="w-4 h-4" />
-                  확인 완료
-                </button>
-                <button
-                  onClick={() => handleStartRevision(doc.id)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  <AlertTriangle className="w-4 h-4" />
-                  보완하기
-                </button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    );
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // 렌더링
-  // ─────────────────────────────────────────────────────────────
+  const statusMsg = getStatusMessage();
+
   return (
     <div className="flex-1 overflow-auto bg-slate-50">
       <div className="max-w-5xl mx-auto px-8 py-10">
-
-        {/* 페이지 헤더 */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
-            제출 서류 확인
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">제출 서류 확인</h1>
           <p className="text-[15px] text-gray-600 leading-relaxed">
             제출된 서류를 미리보기로 확인한 후 '확인 완료' 또는 '보완하기'를 선택해주세요.
           </p>
@@ -504,9 +398,7 @@ export function DocumentReview({
                 <span className="text-sm text-gray-400">확인</span>
               </div>
               <div className="flex items-center justify-end gap-2 mt-1">
-                <p className="text-xs text-gray-400">
-                  전체 {totalDocs}건 중 {totalSubmitted}건 제출
-                </p>
+                <p className="text-xs text-gray-400">전체 {totalDocs}건 중 {totalSubmitted}건 제출</p>
                 {hasRevisionRequests && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
                     <AlertTriangle className="w-3 h-3" />
@@ -517,7 +409,6 @@ export function DocumentReview({
             </div>
           </div>
 
-          {/* 진행 바 */}
           <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all duration-500"
@@ -528,133 +419,72 @@ export function DocumentReview({
           <div className="flex justify-between mt-3 text-sm">
             <div className="flex items-center gap-2">
               <span className="text-blue-600 font-medium">
-                외국인 {foreignerConfirmed}/{foreignerSubmittedCount} 확인
+                외국인 {foreignerStats.confirmedCount}/{foreignerStats.submittedCount} 확인
               </span>
-              {foreignerRevisionCount > 0 && (
-                <span className="text-amber-600 text-xs">· 보완 {foreignerRevisionCount}건</span>
+              {foreignerStats.revisionCount > 0 && (
+                <span className="text-amber-600 text-xs">· 보완 {foreignerStats.revisionCount}건</span>
               )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-blue-600 font-medium">
-                사업체 {companyConfirmed}/{companySubmittedCount} 확인
+                사업체 {companyStats.confirmedCount}/{companyStats.submittedCount} 확인
               </span>
-              {companyRevisionCount > 0 && (
-                <span className="text-amber-600 text-xs">· 보완 {companyRevisionCount}건</span>
+              {companyStats.revisionCount > 0 && (
+                <span className="text-amber-600 text-xs">· 보완 {companyStats.revisionCount}건</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* 서류 검토 영역 - 2컬럼 레이아웃 */}
+        {/* 서류 검토 영역 - 2컬럼 */}
         <div className="grid grid-cols-2 gap-6">
-
-          {/* 외국인 서류 */}
-          <div className="bg-white border-2 border-blue-100 rounded-2xl overflow-hidden">
-            <div className="bg-blue-50 px-5 py-4 border-b border-blue-100">
-              <div className="flex items-center gap-2 text-blue-700">
-                <User className="w-5 h-5" />
-                <h3 className="font-bold">외국인 제출 서류</h3>
-                <span className="ml-auto text-sm">
-                  {foreignerConfirmed}/{foreignerSubmittedCount} 확인
-                </span>
+          {([
+            { docs: FOREIGNER_DOCS, uploaded: foreignerDocs, icon: User, title: "외국인 제출 서류", stats: foreignerStats, target: "foreigner" as const },
+            { docs: COMPANY_DOCS, uploaded: companyDocs, icon: Building2, title: "사업체 제출 서류", stats: companyStats, target: "company" as const },
+          ]).map(({ docs, uploaded, icon: Icon, title, stats, target }) => (
+            <div key={target} className="bg-white border-2 border-blue-100 rounded-2xl overflow-hidden">
+              <div className="bg-blue-50 px-5 py-4 border-b border-blue-100">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <Icon className="w-5 h-5" />
+                  <h3 className="font-bold">{title}</h3>
+                  <span className="ml-auto text-sm">{stats.confirmedCount}/{stats.submittedCount} 확인</span>
+                </div>
+              </div>
+              <div className="p-4 space-y-3 max-h-[600px] overflow-y-auto">
+                {docs.map((doc) => (
+                  <DocumentCard
+                    key={doc.id}
+                    doc={doc}
+                    fileInfo={uploaded[doc.id] || null}
+                    target={target}
+                    status={getStatus(doc.id, target)}
+                    revisionInfo={revisionInfo[doc.id]}
+                    isEditing={editingDocId === doc.id}
+                    revisionNote={revisionNote}
+                    onRevisionNoteChange={setRevisionNote}
+                    onPreview={handlePreview}
+                    onConfirm={handleConfirm}
+                    onStartRevision={handleStartRevision}
+                    onCancelRevision={handleCancelRevision}
+                    onSaveRevision={handleSaveRevision}
+                    onSendResubmitRequest={handleSendResubmitRequest}
+                  />
+                ))}
               </div>
             </div>
-            <div className="p-4 space-y-3 max-h-[600px] overflow-y-auto">
-              {FOREIGNER_DOCS.map((doc) => (
-                <DocumentCard
-                  key={doc.id}
-                  doc={doc}
-                  fileInfo={foreignerDocs[doc.id] || null}
-                  target="foreigner"
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* 사업체 서류 */}
-          <div className="bg-white border-2 border-blue-100 rounded-2xl overflow-hidden">
-            <div className="bg-blue-50 px-5 py-4 border-b border-blue-100">
-              <div className="flex items-center gap-2 text-blue-700">
-                <Building2 className="w-5 h-5" />
-                <h3 className="font-bold">사업체 제출 서류</h3>
-                <span className="ml-auto text-sm">
-                  {companyConfirmed}/{companySubmittedCount} 확인
-                </span>
-              </div>
-            </div>
-            <div className="p-4 space-y-3 max-h-[600px] overflow-y-auto">
-              {COMPANY_DOCS.map((doc) => (
-                <DocumentCard
-                  key={doc.id}
-                  doc={doc}
-                  fileInfo={companyDocs[doc.id] || null}
-                  target="company"
-                />
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* 하단 상태 안내 */}
-        {!allRequiredSubmitted && (
-          <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-xl">
-            <div className="flex items-start gap-3">
-              <Clock className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-gray-700">필수 서류 제출 대기 중</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  아직 모든 필수 서류가 제출되지 않았습니다.
-                  외국인과 사업체가 서류를 모두 제출한 후 검토를 진행해주세요.
-                </p>
-              </div>
+        <div className={cn("mt-6 p-4 border rounded-xl", statusMsg.bg)}>
+          <div className="flex items-start gap-3">
+            {statusMsg.icon}
+            <div>
+              <h4 className={cn("font-semibold", statusMsg.titleColor)}>{statusMsg.title}</h4>
+              <p className={cn("text-sm mt-1", statusMsg.descColor)}>{statusMsg.desc}</p>
             </div>
           </div>
-        )}
-
-        {allRequiredSubmitted && !allRequiredConfirmed && hasRevisionRequests && (
-          <div className="mt-6 p-4 bg-amber-50 border border-amber-300 rounded-xl">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-amber-800">보완 요청 {totalRevisionCount}건 처리 대기 중</h4>
-                <p className="text-sm text-amber-700 mt-1">
-                  문제가 있는 서류에 대해 보완 요청이 등록되었습니다.
-                  '재제출 요청' 버튼을 눌러 외국인/사업체에게 알림을 전송하세요.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {allRequiredSubmitted && !allRequiredConfirmed && !hasRevisionRequests && (
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-            <div className="flex items-start gap-3">
-              <Eye className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-blue-800">서류 검토를 진행해주세요</h4>
-                <p className="text-sm text-blue-700 mt-1">
-                  각 서류를 미리보기로 확인한 후 '확인 완료' 또는 '보완하기'를 선택해주세요.
-                  모든 필수 서류가 '확인 완료' 상태가 되어야 다음 단계로 진행할 수 있습니다.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {allRequiredConfirmed && (
-          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-green-800">모든 필수 서류 검토 완료</h4>
-                <p className="text-sm text-green-700 mt-1">
-                  모든 필수 서류 확인이 완료되었습니다.
-                  하단의 '다음' 버튼을 눌러 서류 생성 단계로 진행하세요.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
